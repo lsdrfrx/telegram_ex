@@ -12,8 +12,8 @@ defmodule TelegramEx.API do
     end
   end
 
-  def send_message(token, to, text) do
-    case Req.get("https://api.telegram.org/bot#{token}/sendMessage?chat_id=#{to}&text=#{text}") do
+  def send_message(message, token) do
+    case Req.post("https://api.telegram.org/bot#{token}/sendMessage", json: message) do
       {:ok, %{status: 200}} -> :ok
       {:error, reason} -> {:error, reason}
     end

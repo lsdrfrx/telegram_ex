@@ -2,6 +2,7 @@ defmodule TelegramEx.Bot.Server do
   use GenServer
 
   alias TelegramEx.API
+  alias TelegramEx.Types
 
   def start_link(bot_module, token),
     do: GenServer.start_link(__MODULE__, {bot_module, token}, name: bot_module)
@@ -59,7 +60,7 @@ defmodule TelegramEx.Bot.Server do
     end
   end
 
-  defp parse_message(message), do: message
+  defp parse_message(message), do: Types.Message.from_map(message)
   defp parse_callback_query(callback_query), do: callback_query
   defp parse_inline_query(inline_query), do: inline_query
 end

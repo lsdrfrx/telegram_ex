@@ -5,6 +5,7 @@ defmodule TelegramEx do
       @bot_token Keyword.fetch!(opts, :token)
 
       alias TelegramEx.API
+      alias TelegramEx.Builder.Message
 
       def child_spec(_) do
         %{
@@ -12,10 +13,6 @@ defmodule TelegramEx do
           start: {TelegramEx.Bot.Server, :start_link, [__MODULE__, @bot_token]},
           type: :worker
         }
-      end
-
-      def send_message(to, message) do
-        API.send_message(@bot_token, to, message)
       end
 
       def send_photo(photo) do

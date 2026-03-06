@@ -17,8 +17,9 @@ defmodule TelegramEx.Builder.Message do
     Map.put(message, :reply_markup, %{inline_keyboard: keyboard})
   end
 
-  def reply_keyboard(message, keyboard) do
-    Map.put(message, :reply_markup, %{keyboard: keyboard})
+  def reply_keyboard(message, keyboard, opts) do
+    message
+    |> Map.put(:reply_markup, Map.merge(%{keyboard: keyboard}, Map.new(opts)))
   end
 
   def remove_keyboard(message) do

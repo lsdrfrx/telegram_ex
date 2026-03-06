@@ -1,21 +1,61 @@
 # TelegramEx
 
-**TODO: Add description**
+Elixir library for building Telegram bots. Provides a simple interface for handling messages, callbacks, and inline queries with automatic polling.
 
-## Installation
+## Why This Library Exists
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `telegram_ex` to your list of dependencies in `mix.exs`:
+I decided to create this library because I couldn't find anything in the existing Elixir ecosystem that I liked. Maybe I just didn't search well enough, but still.
+
+What makes this library different? I like the macro-based implementation, similar to how `GenServer` works. It feels like the right approach for this kind of library, and I think others might appreciate it too.
+
+## Usage
+
+Add the bot to your application's supervision tree:
 
 ```elixir
-def deps do
-  [
-    {:telegram_ex, "~> 0.1.0"}
-  ]
+defmodule MyApp.Application do
+  def start(_type, _args) do
+    children = [MyBot]
+
+    Supervisor.start_link(children, strategy: :one_for_one)
+  end
 end
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/telegram_ex>.
+Create a bot module:
 
+```elixir
+defmodule MyBot do
+  use TelegramEx,
+    name: "my_bot",
+    token: "YOUR_BOT_TOKEN"
+
+  def handle_message(message) do
+    # Handle incoming messages
+  end
+
+  def handle_callback(callback) do
+    # Handle callback queries
+    :ok
+  end
+
+  def handle_inline(inline) do
+    # Handle inline queries
+    :ok
+  end
+end
+```
+
+### Echo Bot Example
+
+```elixir
+defmodule EchoBot do
+  use TelegramEx,
+    name: "echo_bot",
+    token: "YOUR_BOT_TOKEN"
+
+  def handle_message(message) do
+    send_message(message["from"]["id"], message["text"])
+  end
+end
+```

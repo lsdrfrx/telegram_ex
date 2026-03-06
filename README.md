@@ -70,16 +70,17 @@ end
 - `Message.text(message, text)` - Set message text
 - `Message.text(message, text, parse_mode)` - Set text with parse mode (e.g., "Markdown", "HTML")
 - `Message.inline_keyboard(message, keyboard)` - Add inline keyboard
-- `Message.reply_keyboard(message, keyboard)` - Add reply keyboard
+- `Message.reply_keyboard(message, keyboard, opts)` - Add reply keyboard with options
 - `Message.remove_keyboard(message)` - Remove custom keyboard
 - `Message.silent(message)` - Send without notification
+- `Message.answer_callback_query(message, callback, token)` - Answer callback query
 
 ### Keyboard Examples
 
 **Inline Keyboard:**
 
 ```elixir
-def handle_message(%{chat: chat}) do
+def handle_message(%TelegramEx.Types.Message{chat: chat}) do
   keyboard = [[
     %{text: "Button 1", callback_data: "btn_1"},
     %{text: "Button 2", callback_data: "btn_2"}
@@ -95,15 +96,55 @@ end
 **Reply Keyboard:**
 
 ```elixir
-def handle_message(%{chat: chat}) do
+def handle_message(%TelegramEx.Types.Message{chat: chat}) do
   keyboard = [["/help", "/settings"], ["Contact"]]
 
   Message.new(chat["id"])
   |> Message.text("Use the buttons below:")
-  |> Message.reply_keyboard(keyboard)
+  |> Message.reply_keyboard(keyboard, resize_keyboard: true, one_time_keyboard: true)
   |> Message.send(@bot_token)
 end
 ```
+
+**Reply Keyboard Options:**
+
+- `resize_keyboard: true` - Request clients to resize the keyboard
+- `one_time_keyboard: true` - Hide keyboard after first use
+- `selective: true` - Show keyboard to specific users only
+
+## Handling Callback Queries
+
+When a user presses an inline keyboard button, `handle_callback/1` is called:
+
+```elixir
+def handle_callback(%{data: "btn_1", id: callback_id} = callback) do
+  # Handle button 1 press
+end
+
+def handle_callback(%{data: "btn_2", id: callback_id} = callback) do
+  # Handle button 2 press
+end
+```
+
+### Answering Callback Queries
+
+To show an alert or update the user after a callback:
+
+```elixir
+def handle_callback(%{data: data, id: callback_id} = callback) do
+  Message.new(nil)
+  |> Message.answer_callback_query(callback, @bot_token)
+end
+```
+
+**Callback Query Structure:**
+
+- `:id` - Unique identifier for the callback query
+- `:from` - User who triggered the callback (map with string keys)
+- `:message` - The message the callback was attached to
+- `:inline_message_id` - Identifier of the inline message (if applicable)
+- `:chat_instance` - Global identifier for the chat
+- `:data` - Data associated with the callback button
 
 ## Message Structure
 

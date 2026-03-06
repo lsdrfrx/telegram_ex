@@ -30,6 +30,11 @@ defmodule TelegramEx.Builder.Message do
     Map.put(message, :disable_notification, true)
   end
 
+  def answer_callback_query(message, callback, token) do
+    TelegramEx.API.answer_callback_query(token, callback)
+    message
+  end
+
   # TODO: использовать здесь токен из переменной Application
   def send(token, message) do
     TelegramEx.API.send_message(token, message)

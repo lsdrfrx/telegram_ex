@@ -52,15 +52,9 @@ defmodule TelegramEx.Bot.Server do
         update["callback_query"]
         |> parse_callback_query()
         |> bot_module.handle_callback()
-
-      update["inline_query"] ->
-        update["inline_query"]
-        |> parse_inline_query()
-        |> bot_module.handle_inline()
     end
   end
 
   defp parse_message(message), do: Types.Message.from_map(message)
-  defp parse_callback_query(callback_query), do: callback_query
-  defp parse_inline_query(inline_query), do: inline_query
+  defp parse_callback_query(callback_query), do: Types.CallbackQuery.from_map(callback_query)
 end

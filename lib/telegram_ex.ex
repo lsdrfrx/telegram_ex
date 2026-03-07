@@ -2,7 +2,7 @@ defmodule TelegramEx do
   defmacro __using__(_opts) do
     quote do
       alias TelegramEx.API
-      alias TelegramEx.Builder.Message
+      alias TelegramEx.Builder.{Message, Photo}
       alias TelegramEx.Config
 
       def child_spec(_) do
@@ -11,10 +11,6 @@ defmodule TelegramEx do
           start: {TelegramEx.Bot.Server, :start_link, [__MODULE__, Config.token()]},
           type: :worker
         }
-      end
-
-      def send_photo(photo) do
-        IO.inspect(photo)
       end
 
       def handle_message(_message), do: :ok

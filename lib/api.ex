@@ -7,7 +7,7 @@ defmodule TelegramEx.API do
         {:ok, updates}
 
       {:ok, _} ->
-        {:error, :unknown_error}
+        {:error, :unknown}
 
       {:error, reason} ->
         {:error, reason}
@@ -16,11 +16,37 @@ defmodule TelegramEx.API do
 
   def send_message(token, message) do
     case Req.post("https://api.telegram.org/bot#{token}/sendMessage", json: message) do
-      {:ok, %{status: 200}} -> :ok
-      {:error, reason} -> {:error, reason}
+      {:ok, %{status: 200}} ->
+        :ok
+
+      {:ok, %{body: %{"description" => reason}}} ->
+        Logger.error(reason)
+        {:error, :unknown}
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
+  def send_photo(token, photo) do
+    case Req.post("https://api.telegram.org/bot#{token}/sendPhoto", form_multipart: photo) do
+      {:ok, %{status: 200}} ->
+        :ok
+
+      {:ok, %{body: %{"description" => reason}}} ->
+        Logger.error(reason)
+        {:error, :unknown}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @spec answer_callback_query(any(), any()) ::
+          :ok
+          | {:error,
+             :unknown
+             | %{:__exception__ => true, :__struct__ => atom(), optional(atom()) => any()}}
   def answer_callback_query(token, callback) do
     case Req.post("https://api.telegram.org/bot#{token}/answerCallbackQuery",
            json: %{callback_query_id: callback}

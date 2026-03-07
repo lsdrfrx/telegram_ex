@@ -1,16 +1,14 @@
 defmodule TelegramEx do
-  defmacro __using__(opts) do
-    quote bind_quoted: [opts: opts] do
-      @bot_name Keyword.fetch!(opts, :name)
-      @bot_token Keyword.fetch!(opts, :token)
-
+  defmacro __using__(_opts) do
+    quote do
       alias TelegramEx.API
       alias TelegramEx.Builder.Message
+      alias TelegramEx.Config
 
       def child_spec(_) do
         %{
           id: __MODULE__,
-          start: {TelegramEx.Bot.Server, :start_link, [__MODULE__, @bot_token]},
+          start: {TelegramEx.Bot.Server, :start_link, [__MODULE__, Config.token()]},
           type: :worker
         }
       end

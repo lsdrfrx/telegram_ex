@@ -1,4 +1,6 @@
 defmodule TelegramEx.Builder.Message do
+  alias TelegramEx.Config
+
   def new(id) do
     %{chat_id: id}
   end
@@ -30,13 +32,12 @@ defmodule TelegramEx.Builder.Message do
     Map.put(message, :disable_notification, true)
   end
 
-  def answer_callback_query(message, callback, token) do
-    TelegramEx.API.answer_callback_query(token, callback)
+  def answer_callback_query(message, callback) do
+    TelegramEx.API.answer_callback_query(Config.token(), callback)
     message
   end
 
-  # TODO: использовать здесь токен из переменной Application
-  def send(token, message) do
-    TelegramEx.API.send_message(token, message)
+  def send(message) do
+    TelegramEx.API.send_message(Config.token(), message)
   end
 end

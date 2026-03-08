@@ -4,27 +4,42 @@ defmodule TelegramEx.MixProject do
   def project do
     [
       app: :telegram_ex,
-      version: "0.1.0",
+      name: "TelegramEx",
+      version: "1.0.0",
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      build_embedded: Mix.env() == :prod,
+      package: package(),
+      description: description(),
+      deps: deps(),
+      source_url: "https://github.com/lsdrfrx/telegram_ex"
     ]
   end
 
-  # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger],
-      mod: {TelegramEx.Application, []}
+      extra_applications: [:logger]
     ]
   end
 
-  # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:req, "~> 0.5"}
-      # {:dep_from_hexpm, "~> 0.3.0"},
-      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
+      {:req, "~> 0.5"},
+      {:ex_doc, "~> 0.14", only: :dev, runtime: false}
+    ]
+  end
+
+  defp description do
+    "Elixir library for building Telegram bots with macro-based API"
+  end
+
+  defp package do
+    [
+      name: "telegram_ex",
+      files: ~w(lib .formatter.exs mix.exs README* LICENSE*
+                CHANGELOG*),
+      licenses: ["MIT"],
+      links: %{"GitHub" => "https://github.com/lsdrfrx/telegram_ex"}
     ]
   end
 end

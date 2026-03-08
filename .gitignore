@@ -25,3 +25,6 @@ telegram_ex-*.tar
 /lib/test.ex
 /lib/application.ex
 .env
+
+# macOS Finder metadata
+.DS_Store

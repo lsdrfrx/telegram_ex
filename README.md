@@ -26,9 +26,7 @@ Create a bot module:
 
 ```elixir
 defmodule MyBot do
-  use TelegramEx,
-    name: "my_bot",
-    token: "YOUR_BOT_TOKEN"
+  use TelegramEx
 
   def handle_message(message) do
     # Handle incoming messages
@@ -38,12 +36,17 @@ defmodule MyBot do
     # Handle callback queries
     :ok
   end
-
-  def handle_inline(inline) do
-    # Handle inline queries
-    :ok
-  end
 end
+```
+
+Add your bot token to `config/runtime.exs`:
+
+```elixir
+import Config
+
+config :telegram_ex,
+  name: "my_bot",
+  token: System.fetch_env!("TELEGRAM_BOT_TOKEN")
 ```
 
 ## Sending Messages
@@ -52,57 +55,102 @@ Messages are sent using the `TelegramEx.Builder.Message` module:
 
 ```elixir
 defmodule MyBot do
-  use TelegramEx,
-    name: "my_bot",
-    token: "YOUR_BOT_TOKEN"
+  use TelegramEx
 
   def handle_message(%{chat: chat}) do
-    Message.new(chat["id"])
-    |> Message.text("Hello!")
-    |> Message.send(@bot_token)
+    Message.text("Hello!")
+    |> Message.send(chat["id"])
   end
 end
 ```
 
-### Builder Functions
+### Message Builder Functions
 
-- `Message.new(chat_id)` - Create a new message for a chat
-- `Message.text(message, text)` - Set message text
-- `Message.text(message, text, parse_mode)` - Set text with parse mode (e.g., "Markdown", "HTML")
+- `Message.text(text)` - Create a text message
+- `Message.text(text, parse_mode)` - Create a text message with parse mode (e.g., "Markdown", "HTML")
 - `Message.inline_keyboard(message, keyboard)` - Add inline keyboard
 - `Message.reply_keyboard(message, keyboard, opts)` - Add reply keyboard with options
 - `Message.remove_keyboard(message)` - Remove custom keyboard
 - `Message.silent(message)` - Send without notification
-- `Message.answer_callback_query(message, callback, token)` - Answer callback query
+- `Message.answer_callback_query(message, callback)` - Answer callback query
+- `Message.send(message, chat_id)` - Send the message
+
+## Sending Photos
+
+Use `TelegramEx.Builder.Photo` to send images:
+
+```elixir
+defmodule MyBot do
+  use TelegramEx
+
+  def handle_message(%{chat: chat}) do
+    Photo.path("/path/to/image.jpg")
+    |> Photo.caption("Here's a photo!")
+    |> Photo.send(chat["id"])
+  end
+end
+```
+
+### Photo Builder Functions
+
+- `Photo.url(url)` - Send photo from URL
+- `Photo.path(path)` - Send photo from local file path
+- `Photo.caption(photo, caption)` - Add caption to photo
+- `Photo.caption(photo, caption, parse_mode)` - Add caption with parse mode
+- `Photo.silent(photo)` - Send without notification
+- `Photo.send(photo, chat_id)` - Send the photo
+
+## Sending Documents
+
+Use `TelegramEx.Builder.Document` to send files:
+
+```elixir
+defmodule MyBot do
+  use TelegramEx
+
+  def handle_message(%{chat: chat}) do
+    Document.path("/path/to/file.pdf")
+    |> Document.caption("Here's the document")
+    |> Document.send(chat["id"])
+  end
+end
+```
+
+### Document Builder Functions
+
+- `Document.url(url)` - Send document from URL
+- `Document.path(path)` - Send document from local file path
+- `Document.caption(document, caption)` - Add caption to document
+- `Document.caption(document, caption, parse_mode)` - Add caption with parse mode
+- `Document.silent(document)` - Send without notification
+- `Document.send(document, chat_id)` - Send the document
 
 ### Keyboard Examples
 
 **Inline Keyboard:**
 
 ```elixir
-def handle_message(%TelegramEx.Types.Message{chat: chat}) do
+def handle_message(%{chat: chat}) do
   keyboard = [[
     %{text: "Button 1", callback_data: "btn_1"},
     %{text: "Button 2", callback_data: "btn_2"}
   ]]
 
-  Message.new(chat["id"])
-  |> Message.text("Choose an option:", "Markdown")
+  Message.text("Choose an option:", "Markdown")
   |> Message.inline_keyboard(keyboard)
-  |> Message.send(@bot_token)
+  |> Message.send(chat["id"])
 end
 ```
 
 **Reply Keyboard:**
 
 ```elixir
-def handle_message(%TelegramEx.Types.Message{chat: chat}) do
+def handle_message(%{chat: chat}) do
   keyboard = [["/help", "/settings"], ["Contact"]]
 
-  Message.new(chat["id"])
-  |> Message.text("Use the buttons below:")
+  Message.text("Use the buttons below:")
   |> Message.reply_keyboard(keyboard, resize_keyboard: true, one_time_keyboard: true)
-  |> Message.send(@bot_token)
+  |> Message.send(chat["id"])
 end
 ```
 
@@ -110,18 +158,17 @@ end
 
 - `resize_keyboard: true` - Request clients to resize the keyboard
 - `one_time_keyboard: true` - Hide keyboard after first use
-- `selective: true` - Show keyboard to specific users only
 
 ## Handling Callback Queries
 
 When a user presses an inline keyboard button, `handle_callback/1` is called:
 
 ```elixir
-def handle_callback(%{data: "btn_1", id: callback_id} = callback) do
+def handle_callback(%{data: "btn_1"} = callback) do
   # Handle button 1 press
 end
 
-def handle_callback(%{data: "btn_2", id: callback_id} = callback) do
+def handle_callback(%{data: "btn_2"} = callback) do
   # Handle button 2 press
 end
 ```
@@ -131,9 +178,15 @@ end
 To show an alert or update the user after a callback:
 
 ```elixir
-def handle_callback(%{data: data, id: callback_id} = callback) do
-  Message.new(nil)
-  |> Message.answer_callback_query(callback, @bot_token)
+def handle_callback(%{data: data, chat: chat} = callback) do
+  Message.text("Processed: #{data}")
+  |> Message.answer_callback_query(callback)
+  |> Message.send(chat["id"])
+end
+
+# Or simply answer callback without sending message
+def handle_callback(callback) do
+  Message.answer_callback_query(callback)
 end
 ```
 
@@ -168,14 +221,11 @@ The `handle_message/1` callback receives a `%TelegramEx.Types.Message{}` struct 
 
 ```elixir
 defmodule EchoBot do
-  use TelegramEx,
-    name: "echo_bot",
-    token: "YOUR_BOT_TOKEN"
+  use TelegramEx
 
   def handle_message(%{text: text, chat: chat}) do
-    Message.new(chat["id"])
-    |> Message.text("Echo: #{text}")
-    |> Message.send(@bot_token)
+    Message.text("Echo: #{text}")
+    |> Message.send(chat["id"])
   end
 end
 ```
@@ -184,20 +234,16 @@ end
 
 ```elixir
 defmodule MyBot do
-  use TelegramEx,
-    name: "my_bot",
-    token: "YOUR_BOT_TOKEN"
+  use TelegramEx
 
   def handle_message(%{text: "/start", chat: chat}) do
-    Message.new(chat["id"])
-    |> Message.text("Welcome! Send me any message.")
-    |> Message.send(@bot_token)
+    Message.text("Welcome! Send me any message.")
+    |> Message.send(chat["id"])
   end
 
   def handle_message(%{text: text, chat: chat}) do
-    Message.new(chat["id"])
-    |> Message.text("Echo: #{text}")
-    |> Message.send(@bot_token)
+    Message.text("Echo: #{text}")
+    |> Message.send(chat["id"])
   end
 end
 ```

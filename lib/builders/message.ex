@@ -1,18 +1,12 @@
 defmodule TelegramEx.Builder.Message do
-  alias TelegramEx.Config
+  alias TelegramEx.{Config, API}
 
-  def new(id) do
-    %{chat_id: id}
+  def text(text) do
+    %{text: text}
   end
 
-  def text(message, text) do
-    Map.put(message, :text, text)
-  end
-
-  def text(message, text, parse_mode) do
-    message
-    |> Map.put(:text, text)
-    |> Map.put(:parse_mode, parse_mode)
+  def text(text, parse_mode) do
+    %{text: text, parse_mode: parse_mode}
   end
 
   def inline_keyboard(message, keyboard) do
@@ -37,7 +31,11 @@ defmodule TelegramEx.Builder.Message do
     message
   end
 
-  def send(message) do
-    TelegramEx.API.send_message(Config.token(), message)
+  def send(message, id) do
+    message
+    |> Map.put(:chat_id, id)
+    |> then(fn message ->
+      API.send_message(Config.token(), message)
+    end)
   end
 end

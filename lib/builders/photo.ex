@@ -1,18 +1,14 @@
 defmodule TelegramEx.Builder.Photo do
   alias TelegramEx.{Config, API}
 
-  def new(id) do
-    %{chat_id: id}
+  def url(url) do
+    %{photo: url}
   end
 
-  def url(photo, url) do
-    Map.put(photo, :photo, url)
-  end
-
-  def path(photo, path) do
+  def path(path) do
     File.stream!(path)
     |> then(fn stream ->
-      Map.put(photo, :photo, stream)
+      %{photo: stream}
     end)
   end
 
@@ -26,7 +22,11 @@ defmodule TelegramEx.Builder.Photo do
     |> Map.put(:parse_mode, parse_mode)
   end
 
-  def send(photo) do
-    API.send_photo(Config.token(), photo)
+  def send(photo, id) do
+    photo
+    |> Map.put(:chat_id, id)
+    |> then(fn photo ->
+      API.send_photo(Config.token(), photo)
+    end)
   end
 end

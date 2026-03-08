@@ -34,8 +34,6 @@ defmodule TelegramEx.Builder.Message do
   def send(message, id) do
     message
     |> Map.put(:chat_id, id)
-    |> then(fn message ->
-      API.send_message(Config.token(), message)
-    end)
+    |> then(&API.send_message(Config.token(), &1))
   end
 end

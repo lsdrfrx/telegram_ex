@@ -6,10 +6,12 @@ defmodule TelegramEx.Builder.Photo do
   end
 
   def path(path) do
-    File.stream!(path)
-    |> then(fn stream ->
-      %{photo: stream}
-    end)
+    filename = Path.basename(path)
+    content = File.read!(path)
+
+    %{
+      photo: {content, filename: filename, content_type: "image/jpeg"}
+    }
   end
 
   def caption(photo, caption) do
@@ -22,11 +24,13 @@ defmodule TelegramEx.Builder.Photo do
     |> Map.put(:parse_mode, parse_mode)
   end
 
+  def silent(message) do
+    Map.put(message, :disable_notification, true)
+  end
+
   def send(photo, id) do
     photo
     |> Map.put(:chat_id, id)
-    |> then(fn photo ->
-      API.send_photo(Config.token(), photo)
-    end)
+    |> then(&API.send_photo(Config.token(), &1))
   end
 end

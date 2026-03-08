@@ -2,7 +2,7 @@ defmodule TelegramEx do
   defmacro __using__(_opts) do
     quote do
       alias TelegramEx.API
-      alias TelegramEx.Builder.{Message, Photo}
+      alias TelegramEx.Builder.{Message, Photo, Document}
       alias TelegramEx.Config
 
       def child_spec(_) do

@@ -1,13 +1,14 @@
 defmodule TelegramEx.Bot.Server do
   use GenServer
 
-  alias TelegramEx.API
-  alias TelegramEx.Types
+  alias TelegramEx.{API, Types, State}
 
   def start_link(bot_module, token),
     do: GenServer.start_link(__MODULE__, {bot_module, token}, name: bot_module)
 
   def init({bot_module, token}) do
+    TelegramEx.State.init()
+
     state = %{
       bot_module: bot_module,
       token: token,
@@ -22,7 +23,10 @@ defmodule TelegramEx.Bot.Server do
     {:noreply, state}
   end
 
-  defp poll_updates(%{bot_module: bot_module, token: token, offset: offset} = state) do
+  defp poll_updates(
+         %{bot_module: bot_module, token: token, offset: offset} =
+           state
+       ) do
     case API.get_updates(token, offset) do
       {:ok, updates} ->
         Enum.each(updates, &process_update(&1, bot_module))
@@ -46,12 +50,22 @@ defmodule TelegramEx.Bot.Server do
       update["message"] ->
         update["message"]
         |> parse_message()
-        |> bot_module.handle_message()
+        |> run_handler(bot_module)
 
       update["callback_query"] ->
         update["callback_query"]
         |> parse_callback_query()
         |> bot_module.handle_callback()
+    end
+  end
+
+  defp run_handler(message, bot_module) do
+    current_state = State.get_current_state(message.chat["id"])
+
+    if function_exported?(bot_module, :handle_message, 2) and current_state do
+      bot_module.handle_message(message, current_state)
+    else
+      bot_module.handle_message(message)
     end
   end
 

@@ -16,67 +16,44 @@ defmodule TelegramEx.API do
   end
 
   def send_message(token, message) do
-    case Req.post("https://api.telegram.org/bot#{token}/sendMessage", json: message) do
-      {:ok, %{status: 200}} ->
-        :ok
-
-      {:ok, %{body: %{"description" => reason}}} ->
-        Logger.error(reason)
-        {:error, :bad_request}
-
-      {:error, reason} ->
-        {:error, reason}
-    end
+    Req.post("https://api.telegram.org/bot#{token}/sendMessage", json: message)
+    |> handle_response()
   end
 
   def send_photo(token, photo) do
-    case Req.post("https://api.telegram.org/bot#{token}/sendPhoto", form_multipart: photo) do
-      {:ok, %{status: 200}} ->
-        :ok
-
-      {:ok, %{body: %{"description" => reason}}} ->
-        Logger.error(reason)
-        {:error, :bad_request}
-
-      {:error, reason} ->
-        {:error, reason}
-    end
+    Req.post("https://api.telegram.org/bot#{token}/sendPhoto", form_multipart: photo)
+    |> handle_response()
   end
 
   def answer_callback_query(token, callback) do
-    case Req.post("https://api.telegram.org/bot#{token}/answerCallbackQuery",
+    Req.post("https://api.telegram.org/bot#{token}/answerCallbackQuery",
            json: %{callback_query_id: callback}
-         ) do
-      {:ok, %{status: 200}} ->
-        :ok
-
-      {:ok, %{body: %{"description" => reason}}} ->
-        Logger.error(reason)
-        {:error, :bad_request}
-
-      {:error, reason} ->
-        {:error, reason}
-    end
+         )
+    |> handle_response()
   end
 
   def send_document(token, document) do
-    case Req.post("https://api.telegram.org/bot#{token}/sendDocument",
+    Req.post("https://api.telegram.org/bot#{token}/sendDocument",
            form_multipart: document
-         ) do
-      {:ok, %{status: 200}} ->
-        Logger.info("sent")
-        :ok
+         )
+    |> handle_response()
+  end
 
-      {:ok, %{body: %{"description" => reason}}} ->
-        Logger.error(reason)
-        {:error, :bad_request}
+  defp handle_response({:ok, %{status: 200}}) do
+    :ok
+  end
 
-      {:ok, response} ->
-        Logger.error("Unknown error: #{inspect(response)}")
+  defp handle_response({:ok, %{body: %{"description" => reason}}}) do
+    Logger.error(reason)
+    {:error, :bad_request}
+  end
 
-      {:error, reason} ->
-        Logger.error(reason)
-        {:error, reason}
-    end
+  defp handle_response({:ok, response}) do
+    Logger.error("Unknown error: #{inspect(response)}")
+    {:error, :unknown_error}
+  end
+
+  defp handle_response({:error, reason}) do
+    {:error, reason}
   end
 end

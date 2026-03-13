@@ -1,4 +1,7 @@
 defmodule TelegramEx do
+  @callback handle_message(message :: map()) :: any()
+  @callback handle_callback(callback :: map()) :: any()
+
   defmacro defstate(state, do: block) do
     Macro.prewalk(block, fn
       {:def, def_meta, [func_header | rest]} ->
@@ -13,6 +16,8 @@ defmodule TelegramEx do
 
   defmacro __using__(_opts) do
     quote do
+      @behaviour TelegramEx
+
       import TelegramEx
       alias TelegramEx.{API, Config, State}
       alias TelegramEx.Builder.{Message, Photo, Document}
@@ -25,15 +30,18 @@ defmodule TelegramEx do
         }
       end
 
-      def handle_message(_message), do: :ok
-      def handle_callback(_callback), do: :ok
-
       def transition_to(id, state) do
         State.set_current_state(id, state)
       end
 
-      defoverridable handle_message: 1,
-                     handle_callback: 1
+      @before_compile TelegramEx
+    end
+  end
+
+  defmacro __before_compile__(_env) do
+    quote do
+      def handle_message(_message), do: :ok
+      def handle_callback(_callback), do: :ok
     end
   end
 end

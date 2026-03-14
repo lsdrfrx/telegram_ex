@@ -15,10 +15,14 @@ defmodule TelegramEx.FSM do
     set_current_state(id, state)
   end
 
-  def add_data(id, new_data) do
-    existing_data = get_data(id)
-    merged_data = Map.merge(existing_data, new_data)
-    set_current_state(id, get_current_state(id), merged_data)
+  def set_data(id, data) do
+    case :ets.lookup(@table, id) do
+      [{_id, {state, _}} | _] ->
+        :ets.insert(@table, {id, {state, data}})
+
+      [] ->
+        :ets.insert(@table, {id, {nil, data}})
+    end
   end
 
   def get_data(id) do

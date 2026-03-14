@@ -68,6 +68,20 @@ defmodule TelegramEx.Bot.Server do
     else
       bot_module.handle_message(message)
     end
+    |> case do
+      {:transition, new_state, data} ->
+        FSM.transition_to(message.chat["id"], new_state)
+        FSM.set_data(message.chat["id"], data)
+
+      {:transition, new_state} ->
+        FSM.transition_to(message.chat["id"], new_state)
+
+      {:stay, data} ->
+        FSM.set_data(message.chat["id"], data)
+
+      _ ->
+        :ok
+    end
   end
 
   defp parse_message(message), do: Types.Message.from_map(message)

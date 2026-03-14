@@ -1,6 +1,6 @@
 defmodule TelegramEx.Server do
   use GenServer
-
+  require Logger
   alias TelegramEx.{API, Types, FSM}
 
   def start_link(bot_module, token),
@@ -79,8 +79,13 @@ defmodule TelegramEx.Server do
       {:stay, data} ->
         FSM.set_data(message.chat["id"], data)
 
-      _ ->
-        :ok
+      :ok -> :ok
+
+      {:error, reason} ->
+        Logger.error("Handler error: #{inspect(reason)}")
+
+      error ->
+        Logger.error("Unknown handler response: #{inspect(error)}")
     end
   end
 

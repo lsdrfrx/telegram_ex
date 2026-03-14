@@ -4,6 +4,10 @@ defmodule TelegramEx.FSM do
     :ets.new(@table, [:set, :public, :named_table])
   end
 
+  def reset_state(id) do
+    set_current_state(id, nil, %{})
+  end
+
   def get_current_state(id) do
     case :ets.lookup(@table, id) do
       [{_id, {state, _data}} | _] -> state

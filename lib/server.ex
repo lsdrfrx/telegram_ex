@@ -1,4 +1,4 @@
-defmodule TelegramEx.Bot.Server do
+defmodule TelegramEx.Server do
   use GenServer
 
   alias TelegramEx.{API, Types, FSM}

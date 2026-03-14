@@ -14,7 +14,7 @@ defmodule TelegramEx do
       def child_spec(_) do
         %{
           id: __MODULE__,
-          start: {TelegramEx.Bot.Server, :start_link, [__MODULE__, Config.token()]},
+          start: {TelegramEx.Server, :start_link, [__MODULE__, Config.token()]},
           type: :worker
         }
       end

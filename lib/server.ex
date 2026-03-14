@@ -50,23 +50,23 @@ defmodule TelegramEx.Bot.Server do
       update["message"] ->
         update["message"]
         |> parse_message()
-        |> run_handler(bot_module)
+        |> run_handler(bot_module, :handle_message)
 
       update["callback_query"] ->
         update["callback_query"]
         |> parse_callback_query()
-        |> bot_module.handle_callback()
+        |> run_handler(bot_module, :handle_callback)
     end
   end
 
-  defp run_handler(message, bot_module) do
+  defp run_handler(message, bot_module, handler) do
     current_state = FSM.get_current_state(message.chat["id"])
 
-    if function_exported?(bot_module, :handle_message, 3) and current_state do
+    if function_exported?(bot_module, handler, 3) and current_state do
       data = FSM.get_data(message.chat["id"])
-      bot_module.handle_message(message, current_state, data)
+      apply(bot_module, handler, [message, current_state, data])
     else
-      bot_module.handle_message(message)
+      apply(bot_module, handler, [message])
     end
     |> case do
       {:transition, new_state, data} ->

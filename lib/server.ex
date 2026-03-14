@@ -1,13 +1,13 @@
-defmodule TelegramEx.Bot.Server do
+defmodule TelegramEx.Server do
   use GenServer
-
-  alias TelegramEx.{API, Types, State}
+  require Logger
+  alias TelegramEx.{API, Types, FSM}
 
   def start_link(bot_module, token),
     do: GenServer.start_link(__MODULE__, {bot_module, token}, name: bot_module)
 
   def init({bot_module, token}) do
-    TelegramEx.State.init()
+    FSM.init()
 
     state = %{
       bot_module: bot_module,
@@ -50,22 +50,42 @@ defmodule TelegramEx.Bot.Server do
       update["message"] ->
         update["message"]
         |> parse_message()
-        |> run_handler(bot_module)
+        |> run_handler(bot_module, :handle_message)
 
       update["callback_query"] ->
         update["callback_query"]
         |> parse_callback_query()
-        |> bot_module.handle_callback()
+        |> run_handler(bot_module, :handle_callback)
     end
   end
 
-  defp run_handler(message, bot_module) do
-    current_state = State.get_current_state(message.chat["id"])
+  defp run_handler(message, bot_module, handler) do
+    current_state = FSM.get_current_state(message.chat["id"])
 
-    if function_exported?(bot_module, :handle_message, 2) and current_state do
-      bot_module.handle_message(message, current_state)
+    if function_exported?(bot_module, handler, 3) and current_state do
+      data = FSM.get_data(message.chat["id"])
+      apply(bot_module, handler, [message, current_state, data])
     else
-      bot_module.handle_message(message)
+      apply(bot_module, handler, [message])
+    end
+    |> case do
+      {:transition, new_state, data} ->
+        FSM.transition_to(message.chat["id"], new_state)
+        FSM.set_data(message.chat["id"], data)
+
+      {:transition, new_state} ->
+        FSM.transition_to(message.chat["id"], new_state)
+
+      {:stay, data} ->
+        FSM.set_data(message.chat["id"], data)
+
+      :ok -> :ok
+
+      {:error, reason} ->
+        Logger.error("Handler error: #{inspect(reason)}")
+
+      error ->
+        Logger.error("Unknown handler response: #{inspect(error)}")
     end
   end
 

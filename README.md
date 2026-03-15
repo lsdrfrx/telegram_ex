@@ -49,6 +49,63 @@ config :telegram_ex,
   token: System.fetch_env!("TELEGRAM_BOT_TOKEN")
 ```
 
+## Stateless Handlers
+
+These handlers receive only the incoming update and do not depend on FSM state or stored data.
+
+```elixir
+defmodule MyBot do
+  use TelegramEx
+
+  def handle_message(%{text: "/start", chat: chat}) do
+    Message.text("Welcome")
+    |> Message.send(chat["id"])
+  end
+
+  def handle_callback(%{data: "ping", message: %{chat: chat}} = callback) do
+    Message.text("pong")
+    |> Message.answer_callback_query(callback)
+    |> Message.send(chat["id"])
+  end
+end
+```
+
+Use this style when the handler does not need to remember anything between updates.
+
+## Stateful Handlers
+
+`defstate/2` is used when you want handlers to be selected by the current FSM state, with the state injected into pattern matching automatically. Regular handlers also can work with stored data via second argument (in this example, `data` argument), stateful handlers only use current state in pattern matching.
+
+```elixir
+defmodule MyBot do
+  use TelegramEx
+
+  def handle_message(%{text: "/start", chat: chat}) do
+    Message.text("Welcome")
+    |> Message.send(chat["id"])
+
+    {:transition, :started, %{step: 1}}
+  end
+
+  defstate :started do
+    def handle_message(%{text: text, chat: chat}, data) do
+      Message.text("You said: #{text}")
+      |> Message.send(chat["id"])
+
+      {:stay, Map.put(data, :last_message, text)}
+    end
+  end
+end
+```
+
+Handlers can return:
+
+- `:ok` - keep the current state and data unchanged
+- `{:stay, data}` - keep the current state and replace stored data
+- `{:transition, state}` - change the current state and keep existing data
+- `{:transition, state, data}` - change the current state and replace stored data
+- `{:error, reason}` - log a handler error
+
 ## Sending Messages
 
 Messages are sent using the `TelegramEx.Builder.Message` module:

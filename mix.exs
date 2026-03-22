@@ -25,6 +25,7 @@ defmodule TelegramEx.MixProject do
   defp deps do
     [
       {:req, "~> 0.5"},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.14", only: :dev, runtime: false}
     ]
   end

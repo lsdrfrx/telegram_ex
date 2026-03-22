@@ -1,0 +1,10 @@
+#!/bin/sh
+set -e
+
+fail() {
+  echo "pre-push hook failed. Fix issues above and try again." >&2
+}
+trap fail ERR
+
+mix format --check-formatted
+mix credo --strict

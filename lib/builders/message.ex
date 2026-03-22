@@ -1,5 +1,5 @@
 defmodule TelegramEx.Builder.Message do
-  alias TelegramEx.{Config, API}
+  alias TelegramEx.API
 
   def text(text) do
     %{text: text}
@@ -27,13 +27,13 @@ defmodule TelegramEx.Builder.Message do
   end
 
   def answer_callback_query(message, callback) do
-    TelegramEx.API.answer_callback_query(Config.token(), callback)
+    API.answer_callback_query(Process.get(:token), callback)
     message
   end
 
   def send(message, id) do
     message
     |> Map.put(:chat_id, id)
-    |> then(&API.send_message(Config.token(), &1))
+    |> then(&API.send_message(Process.get(:token), &1))
   end
 end

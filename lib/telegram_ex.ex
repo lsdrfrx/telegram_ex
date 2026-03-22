@@ -2,7 +2,7 @@ defmodule TelegramEx do
   @callback handle_message(message :: map()) :: any()
   @callback handle_callback(callback :: map()) :: any()
 
-  defmacro __using__(_opts) do
+  defmacro __using__(opts) do
     quote do
       @behaviour TelegramEx
 
@@ -11,10 +11,12 @@ defmodule TelegramEx do
       alias TelegramEx.{API, Config, FSM}
       alias TelegramEx.Builder.{Message, Photo, Document}
 
+      @bot_name Keyword.fetch!(unquote(opts), :name)
+
       def child_spec(_) do
         %{
           id: __MODULE__,
-          start: {TelegramEx.Server, :start_link, [__MODULE__, Config.token()]},
+          start: {TelegramEx.Server, :start_link, [__MODULE__, Config.token(@bot_name)]},
           type: :worker
         }
       end

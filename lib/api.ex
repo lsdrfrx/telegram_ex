@@ -27,15 +27,15 @@ defmodule TelegramEx.API do
 
   def answer_callback_query(token, callback) do
     Req.post("https://api.telegram.org/bot#{token}/answerCallbackQuery",
-           json: %{callback_query_id: callback}
-         )
+      json: %{callback_query_id: callback}
+    )
     |> handle_response()
   end
 
   def send_document(token, document) do
     Req.post("https://api.telegram.org/bot#{token}/sendDocument",
-           form_multipart: document
-         )
+      form_multipart: document
+    )
     |> handle_response()
   end
 

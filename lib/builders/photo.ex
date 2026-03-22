@@ -1,5 +1,5 @@
 defmodule TelegramEx.Builder.Photo do
-  alias TelegramEx.{Config, API}
+  alias TelegramEx.API
 
   def url(url) do
     %{photo: url}
@@ -31,6 +31,6 @@ defmodule TelegramEx.Builder.Photo do
   def send(photo, id) do
     photo
     |> Map.put(:chat_id, id)
-    |> then(&API.send_photo(Config.token(), &1))
+    |> then(&API.send_photo(Process.get(:token), &1))
   end
 end

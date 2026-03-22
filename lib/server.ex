@@ -27,6 +27,8 @@ defmodule TelegramEx.Server do
          %{bot_module: bot_module, token: token, offset: offset} =
            state
        ) do
+    Process.put(:token, token)
+
     case API.get_updates(token, offset) do
       {:ok, updates} ->
         Enum.each(updates, &process_update(&1, bot_module))
@@ -79,7 +81,8 @@ defmodule TelegramEx.Server do
       {:stay, data} ->
         FSM.set_data(message.chat["id"], data)
 
-      :ok -> :ok
+      :ok ->
+        :ok
 
       {:error, reason} ->
         Logger.error("Handler error: #{inspect(reason)}")

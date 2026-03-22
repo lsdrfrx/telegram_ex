@@ -1,5 +1,5 @@
 defmodule TelegramEx.Builder.Document do
-  alias TelegramEx.{Config, API}
+  alias TelegramEx.API
 
   def url(url) do
     %{document: url}
@@ -31,6 +31,6 @@ defmodule TelegramEx.Builder.Document do
   def send(document, id) do
     document
     |> Map.put(:chat_id, id)
-    |> then(&API.send_document(Config.token(), &1))
+    |> then(&API.send_document(Process.get(:token), &1))
   end
 end

@@ -1,6 +1,14 @@
+<div align="center">
+  
 # TelegramEx
 
 Elixir library for building Telegram bots. Provides a simple interface for handling messages, callbacks, and inline queries with automatic polling.
+
+[![Hex Version](https://img.shields.io/hexpm/v/telegram_ex.svg?style=for-the-badge)](https://hex.pm/packages/telegram_ex)
+![Last commit](https://img.shields.io/github/last-commit/lsdrfrx/telegram_ex?style=for-the-badge)
+![Stars](https://img.shields.io/github/stars/lsdrfrx/telegram_ex?style=for-the-badge)
+![License](https://img.shields.io/github/license/lsdrfrx/telegram_ex?style=for-the-badge)
+</div>
 
 ## Why This Library Exists
 
@@ -26,7 +34,7 @@ Create a bot module:
 
 ```elixir
 defmodule MyBot do
-  use TelegramEx
+  use TelegramEx, name: :my_bot
 
   def handle_message(message) do
     # Handle incoming messages
@@ -45,8 +53,7 @@ Add your bot token to `config/runtime.exs`:
 import Config
 
 config :telegram_ex,
-  name: "my_bot",
-  token: System.fetch_env!("TELEGRAM_BOT_TOKEN")
+  my_bot: System.fetch_env!("MY_BOT_TELEGRAM_TOKEN")
 ```
 
 ## Stateless Handlers

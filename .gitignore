@@ -28,3 +28,5 @@ telegram_ex-*.tar
 
 # macOS Finder metadata
 .DS_Store
+
+.tool-versions

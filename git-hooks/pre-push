@@ -8,3 +8,4 @@ trap fail ERR
 
 mix format --check-formatted
 mix credo --strict
+mix compile --warnings-as-errors

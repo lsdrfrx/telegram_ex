@@ -4,6 +4,7 @@
 
 Elixir library for building Telegram bots. Provides a simple interface for handling messages, callbacks, and inline queries with automatic polling.
 
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/lsdrfrx/telegram_ex/ci.yml?style=for-the-badge)
 [![Hex Version](https://img.shields.io/hexpm/v/telegram_ex.svg?style=for-the-badge)](https://hex.pm/packages/telegram_ex)
 ![Last commit](https://img.shields.io/github/last-commit/lsdrfrx/telegram_ex?style=for-the-badge)
 ![Stars](https://img.shields.io/github/stars/lsdrfrx/telegram_ex?style=for-the-badge)

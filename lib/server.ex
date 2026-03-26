@@ -13,18 +13,20 @@ defmodule TelegramEx.Server do
 
   def init({bot_module, bot_name}) do
     case FSM.init(bot_name) do
-      :ok -> :ok
-      {:error, reason} -> Logger.error(reason)
+      :ok ->
+        state = %{
+          bot_module: bot_module,
+          bot_name: bot_name,
+          token: Config.token(bot_name),
+          offset: 0
+        }
+
+        {:ok, state, {:continue, :start_polling}}
+
+      {:error, reason} ->
+        Logger.error("FSM initialization failed: #{reason}")
+        {:stop, reason}
     end
-
-    state = %{
-      bot_module: bot_module,
-      bot_name: bot_name,
-      token: Config.token(bot_name),
-      offset: 0
-    }
-
-    {:ok, state, {:continue, :start_polling}}
   end
 
   def handle_continue(:start_polling, state) do
@@ -64,6 +66,9 @@ defmodule TelegramEx.Server do
         update["callback_query"]
         |> parse_callback_query()
         |> run_handler(bot_module, bot_name, :handle_callback)
+
+      true ->
+        :ok
     end
   end
 
@@ -83,7 +88,7 @@ defmodule TelegramEx.Server do
         FSM.set_state(bot_name, message.chat["id"], new_state)
 
       {:stay, data} ->
-        FSM.set_state(message.chat["id"], state, data)
+        FSM.set_state(bot_name, message.chat["id"], state, data)
 
       :ok ->
         :ok

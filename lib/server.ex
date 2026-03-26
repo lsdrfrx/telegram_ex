@@ -1,17 +1,21 @@
 defmodule TelegramEx.Server do
   use GenServer
   require Logger
-  alias TelegramEx.{API, Types, FSM}
+  alias TelegramEx.{API, Types, FSM, Config}
 
-  def start_link(bot_module, token),
-    do: GenServer.start_link(__MODULE__, {bot_module, token}, name: bot_module)
+  def start_link(bot_module, bot_name),
+    do: GenServer.start_link(__MODULE__, {bot_module, bot_name}, name: bot_name)
 
-  def init({bot_module, token}) do
-    FSM.init()
+  def init({bot_module, bot_name}) do
+    case FSM.init(bot_name) do
+      :ok -> :ok
+      {:error, reason} -> Logger.error(reason)
+    end
 
     state = %{
       bot_module: bot_module,
-      token: token,
+      bot_name: bot_name,
+      token: Config.token(bot_name),
       offset: 0
     }
 
@@ -23,19 +27,16 @@ defmodule TelegramEx.Server do
     {:noreply, state}
   end
 
-  defp poll_updates(
-         %{bot_module: bot_module, token: token, offset: offset} =
-           state
-       ) do
+  defp poll_updates(%{token: token, offset: offset} = state) do
     Process.put(:token, token)
 
     case API.get_updates(token, offset) do
       {:ok, updates} ->
-        Enum.each(updates, &process_update(&1, bot_module))
+        Enum.each(updates, &process_update(&1, state))
 
         new_offset =
           case updates do
-            [] -> state.offset
+            [] -> offset
             updates -> List.last(updates)["update_id"] + 1
           end
 
@@ -47,39 +48,37 @@ defmodule TelegramEx.Server do
     end
   end
 
-  defp process_update(update, bot_module) do
+  defp process_update(update, %{bot_module: bot_module, bot_name: bot_name}) do
     cond do
       update["message"] ->
         update["message"]
         |> parse_message()
-        |> run_handler(bot_module, :handle_message)
+        |> run_handler(bot_module, bot_name, :handle_message)
 
       update["callback_query"] ->
         update["callback_query"]
         |> parse_callback_query()
-        |> run_handler(bot_module, :handle_callback)
+        |> run_handler(bot_module, bot_name, :handle_callback)
     end
   end
 
-  defp run_handler(message, bot_module, handler) do
-    current_state = FSM.get_current_state(message.chat["id"])
+  defp run_handler(message, bot_module, bot_name, handler) do
+    {state, data} = FSM.get_state(bot_name, message.chat["id"])
 
-    if function_exported?(bot_module, handler, 3) and current_state do
-      data = FSM.get_data(message.chat["id"])
-      apply(bot_module, handler, [message, current_state, data])
+    if function_exported?(bot_module, handler, 3) and state do
+      apply(bot_module, handler, [message, state, data])
     else
       apply(bot_module, handler, [message])
     end
     |> case do
       {:transition, new_state, data} ->
-        FSM.transition_to(message.chat["id"], new_state)
-        FSM.set_data(message.chat["id"], data)
+        FSM.set_state(bot_name, message.chat["id"], new_state, data)
 
       {:transition, new_state} ->
-        FSM.transition_to(message.chat["id"], new_state)
+        FSM.set_state(bot_name, message.chat["id"], new_state)
 
       {:stay, data} ->
-        FSM.set_data(message.chat["id"], data)
+        FSM.set_state(message.chat["id"], state, data)
 
       :ok ->
         :ok

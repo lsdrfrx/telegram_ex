@@ -1,48 +1,26 @@
 defmodule TelegramEx.FSM do
-  @table :telegram_ex_table
-  def init() do
-    :ets.new(@table, [:set, :public, :named_table])
-  end
-
-  def reset_state(id) do
-    set_current_state(id, nil, %{})
-  end
-
-  def get_current_state(id) do
-    case :ets.lookup(@table, id) do
-      [{_id, {state, _data}} | _] -> state
-      [] -> nil
+  def init(name) do
+    case Pockets.new(name) do
+      {:ok, _} -> :ok
+      {:error, reason} -> {:error, reason}
     end
   end
 
-  def transition_to(id, state) do
-    set_current_state(id, state)
+  def reset_state(name, id) do
+    Pockets.delete(name, id)
   end
 
-  def set_data(id, data) do
-    case :ets.lookup(@table, id) do
-      [{_id, {state, _}} | _] ->
-        :ets.insert(@table, {id, {state, data}})
-
-      [] ->
-        :ets.insert(@table, {id, {nil, data}})
-    end
+  def get_state(name, id) do
+    Pockets.get(name, id, {nil, nil})
   end
 
-  def get_data(id) do
-    case :ets.lookup(@table, id) do
-      [{_id, {_state, data}} | _] -> data
-      [] -> %{}
-    end
+  def set_state(name, id, state) do
+    {_, data} = get_state(name, id)
+    Pockets.put(name, id, {state, data})
   end
 
-  def set_current_state(id, state) do
-    existing_data = get_data(id)
-    :ets.insert(@table, {id, {state, existing_data}})
-  end
-
-  def set_current_state(id, state, data) do
-    :ets.insert(@table, {id, {state, data}})
+  def set_state(name, id, state, data) do
+    Pockets.put(name, id, {state, data})
   end
 
   defmacro defstate(state, do: block) do

@@ -1,4 +1,6 @@
 defmodule TelegramEx.Types.Message do
+  @moduledoc "Struct representing a Telegram Message object."
+
   defstruct [
     :message_id,
     :from,

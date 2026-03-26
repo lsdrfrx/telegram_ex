@@ -1,4 +1,11 @@
 defmodule TelegramEx.API do
+  @moduledoc """
+  HTTP wrapper around the Telegram Bot API.
+
+      API.send_message(token, %{chat_id: 123, text: "Hi"})
+      API.send_photo(token, %{chat_id: 123, photo: "https://..."})
+  """
+
   require Logger
 
   def get_updates(token, offset) do

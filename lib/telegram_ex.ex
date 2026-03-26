@@ -1,4 +1,16 @@
 defmodule TelegramEx do
+  @moduledoc """
+  Entry point for building Telegram bots.
+
+      defmodule MyBot do
+        use TelegramEx, name: :my_bot
+
+        def handle_message(%{text: "/start", chat: chat}) do
+          Message.text("Hello!") |> Message.send(chat["id"])
+        end
+      end
+  """
+
   @callback handle_message(message :: map()) :: any()
   @callback handle_callback(callback :: map()) :: any()
 

@@ -1,4 +1,6 @@
 defmodule TelegramEx.Types.CallbackQuery do
+  @moduledoc "Struct representing a Telegram CallbackQuery object."
+
   alias TelegramEx.Types.Message
 
   defstruct [

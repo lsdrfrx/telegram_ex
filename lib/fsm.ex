@@ -1,4 +1,13 @@
 defmodule TelegramEx.FSM do
+  @moduledoc """
+  Per-user FSM backed by Pockets (ETS). Stores `{state, data}` keyed by chat ID.
+
+      FSM.set_state(bot_name, chat_id, :waiting_name)
+      FSM.set_state(bot_name, chat_id, :waiting_name, %{step: 1})
+
+      FSM.get_state(bot_name, chat_id)  # => {:waiting_name, %{step: 1}}
+  """
+
   def init(name) do
     case Pockets.new(name) do
       {:ok, _} -> :ok

@@ -1,4 +1,9 @@
 defmodule TelegramEx.Server do
+  @moduledoc """
+  GenServer that long-polls Telegram for updates and dispatches them to the bot module.
+  Started automatically via `child_spec/1` injected by `use TelegramEx`.
+  """
+
   use GenServer
   require Logger
   alias TelegramEx.{API, Config, FSM, Types}

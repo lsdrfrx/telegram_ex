@@ -73,7 +73,8 @@ defmodule TelegramEx.Server do
   end
 
   defp run_handler(message, bot_module, bot_name, handler) do
-    {state, data} = FSM.get_state(bot_name, message.chat["id"])
+    chat_id = get_chat_id(message)
+    {state, data} = FSM.get_state(bot_name, chat_id)
 
     if function_exported?(bot_module, handler, 3) and state do
       apply(bot_module, handler, [message, state, data])
@@ -82,13 +83,13 @@ defmodule TelegramEx.Server do
     end
     |> case do
       {:transition, new_state, data} ->
-        FSM.set_state(bot_name, message.chat["id"], new_state, data)
+        FSM.set_state(bot_name, chat_id, new_state, data)
 
       {:transition, new_state} ->
-        FSM.set_state(bot_name, message.chat["id"], new_state)
+        FSM.set_state(bot_name, chat_id, new_state)
 
       {:stay, data} ->
-        FSM.set_state(bot_name, message.chat["id"], state, data)
+        FSM.set_state(bot_name, chat_id, state, data)
 
       :ok ->
         :ok
@@ -100,6 +101,9 @@ defmodule TelegramEx.Server do
         Logger.error("Unknown handler response: #{inspect(error)}")
     end
   end
+
+  defp get_chat_id(%Types.CallbackQuery{message: %{chat: chat}}), do: chat["id"]
+  defp get_chat_id(%Types.Message{chat: chat}), do: chat["id"]
 
   defp parse_message(message), do: Types.Message.from_map(message)
   defp parse_callback_query(callback_query), do: Types.CallbackQuery.from_map(callback_query)

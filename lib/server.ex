@@ -1,7 +1,7 @@
 defmodule TelegramEx.Server do
   use GenServer
   require Logger
-  alias TelegramEx.{API, Types, FSM, Config}
+  alias TelegramEx.{API, Config, FSM, Types}
 
   def start_link(bot_module, bot_name),
     do: GenServer.start_link(__MODULE__, {bot_module, bot_name}, name: bot_name)
@@ -43,7 +43,7 @@ defmodule TelegramEx.Server do
         poll_updates(%{state | offset: new_offset})
 
       {:error, reason} ->
-        IO.inspect(reason)
+        Logger.error("Error while getting update: #{reason}")
         poll_updates(state)
     end
   end

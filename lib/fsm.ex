@@ -8,6 +8,9 @@ defmodule TelegramEx.FSM do
       FSM.get_state(bot_name, chat_id)  # => {:waiting_name, %{step: 1}}
   """
 
+  @type chat_id :: TelegramEx.Types.chat_id()
+
+  @spec init(atom()) :: :ok | {:error, term()}
   def init(name) do
     case Pockets.new(name) do
       {:ok, _} -> :ok
@@ -15,19 +18,23 @@ defmodule TelegramEx.FSM do
     end
   end
 
+  @spec reset_state(atom(), chat_id()) :: atom() | {:error, term()}
   def reset_state(name, id) do
     Pockets.delete(name, id)
   end
 
+  @spec get_state(atom(), chat_id()) :: {term(), term()}
   def get_state(name, id) do
     Pockets.get(name, id, {nil, nil})
   end
 
+  @spec set_state(atom(), chat_id(), atom()) :: atom() | {:error, term()}
   def set_state(name, id, state) do
     {_, data} = get_state(name, id)
     Pockets.put(name, id, {state, data})
   end
 
+  @spec set_state(atom(), chat_id(), atom(), term()) :: atom() | {:error, term()}
   def set_state(name, id, state, data) do
     Pockets.put(name, id, {state, data})
   end

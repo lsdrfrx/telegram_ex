@@ -3,6 +3,15 @@ defmodule TelegramEx.Types.CallbackQuery do
 
   alias TelegramEx.Types.Message
 
+  @type t() :: %__MODULE__{
+          id: String.t(),
+          from: map(),
+          message: Message.t() | nil,
+          inline_message_id: String.t() | nil,
+          chat_instance: String.t(),
+          data: String.t()
+        }
+
   defstruct [
     :id,
     :from,

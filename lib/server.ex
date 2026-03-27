@@ -8,9 +8,20 @@ defmodule TelegramEx.Server do
   require Logger
   alias TelegramEx.{API, Config, FSM, Types}
 
+  @type chat_id :: TelegramEx.Types.chat_id()
+
+  @type state :: %{
+          bot_module: module(),
+          bot_name: atom(),
+          token: String.t(),
+          offset: integer()
+        }
+
+  @spec start_link(module(), atom()) :: GenServer.on_start()
   def start_link(bot_module, bot_name),
     do: GenServer.start_link(__MODULE__, {bot_module, bot_name}, name: bot_name)
 
+  @impl true
   def init({bot_module, bot_name}) do
     case FSM.init(bot_name) do
       :ok ->
@@ -29,11 +40,13 @@ defmodule TelegramEx.Server do
     end
   end
 
+  @impl true
   def handle_continue(:start_polling, state) do
     Task.start_link(fn -> poll_updates(state) end)
     {:noreply, state}
   end
 
+  @spec poll_updates(state()) :: no_return()
   defp poll_updates(%{token: token, offset: offset} = state) do
     Process.put(:token, token)
 
@@ -55,6 +68,7 @@ defmodule TelegramEx.Server do
     end
   end
 
+  @spec process_update(map(), state()) :: :ok
   defp process_update(update, %{bot_module: bot_module, bot_name: bot_name}) do
     cond do
       update["message"] ->
@@ -72,6 +86,12 @@ defmodule TelegramEx.Server do
     end
   end
 
+  @spec run_handler(
+          Types.Message.t() | Types.CallbackQuery.t(),
+          module(),
+          atom(),
+          atom()
+        ) :: :ok
   defp run_handler(message, bot_module, bot_name, handler) do
     chat_id = get_chat_id(message)
     {state, data} = FSM.get_state(bot_name, chat_id)
@@ -102,9 +122,13 @@ defmodule TelegramEx.Server do
     end
   end
 
+  @spec get_chat_id(Types.Message.t() | Types.CallbackQuery.t()) :: chat_id()
   defp get_chat_id(%Types.CallbackQuery{message: %{chat: chat}}), do: chat["id"]
   defp get_chat_id(%Types.Message{chat: chat}), do: chat["id"]
 
+  @spec parse_message(map()) :: Types.Message.t()
   defp parse_message(message), do: Types.Message.from_map(message)
+
+  @spec parse_callback_query(map()) :: Types.CallbackQuery.t()
   defp parse_callback_query(callback_query), do: Types.CallbackQuery.from_map(callback_query)
 end

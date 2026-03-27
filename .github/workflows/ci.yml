@@ -32,6 +32,13 @@
              _build
            key: ${{ runner.os }}-mix-1.18.4-28.4-${{ hashFiles('**/mix.lock') }}
            restore-keys: ${{ runner.os }}-mix-1.18.4-28.4-
+
+       - name: Cache PLT
+         uses: actions/cache@v4
+         with:
+           path: priv/plts
+           key: ${{ runner.os }}-plt-1.18.4-28.4-${{ hashFiles('**/mix.lock') }}
+           restore-keys: ${{ runner.os }}-plt-1.18.4-28.4-
  
        - name: Install dependencies
          run: mix deps.get
@@ -44,6 +51,9 @@
  
        - name: Run Credo
          run: mix credo --strict
+
+       - name: Run dialyzer
+         run: mix dialyzer
  
        - name: Run tests
          run: mix test

@@ -68,7 +68,7 @@ defmodule TelegramEx.Server do
     end
   end
 
-  @spec process_update(map(), state()) :: :ok
+  @spec process_update(map(), state()) :: :ok | {:error, term()}
   defp process_update(update, %{bot_module: bot_module, bot_name: bot_name}) do
     cond do
       update["message"] ->
@@ -91,7 +91,7 @@ defmodule TelegramEx.Server do
           module(),
           atom(),
           atom()
-        ) :: :ok
+        ) :: :ok | {:error, term()}
   defp run_handler(message, bot_module, bot_name, handler) do
     chat_id = get_chat_id(message)
     {state, data} = FSM.get_state(bot_name, chat_id)

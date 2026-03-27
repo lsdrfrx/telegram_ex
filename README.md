@@ -311,3 +311,45 @@ defmodule MyBot do
   end
 end
 ```
+
+## Roadmap
+
+### Sending Messages
+- [x] Text messages
+- [x] Photos (local & remote)
+- [x] Documents (local & remote)
+- [ ] Stickers
+- [ ] Video
+- [ ] Location
+- [ ] Polls
+- [ ] Quizzes
+- [ ] Contacts
+
+### Keyboards
+- [x] Inline keyboard
+- [x] Reply keyboard
+
+### Message Management
+- [ ] Edit message text
+- [ ] Edit message caption
+- [ ] Delete message
+
+### Group Actions
+- [ ] Get chat members
+- [ ] Ban user
+- [ ] Kick user
+- [ ] Restrict user
+
+### Chat Effects
+- [ ] Typing indicator
+- [ ] Recording voice indicator
+
+### Integrations & Infrastructure
+- [x] FSM
+- [ ] Webhooks
+- [ ] Middlewares
+- [ ] Rate limiting
+- [ ] Task scheduler
+- [ ] Internationalization
+- [ ] Backpex integration
+- [ ] Routers

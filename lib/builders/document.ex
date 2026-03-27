@@ -1,4 +1,12 @@
 defmodule TelegramEx.Builder.Document do
+  @moduledoc """
+  Builder for document payloads.
+
+      Document.path("/tmp/report.pdf")
+      |> Document.caption("Report")
+      |> Document.send(chat_id)
+  """
+
   alias TelegramEx.API
 
   def url(url) do

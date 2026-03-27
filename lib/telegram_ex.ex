@@ -1,4 +1,16 @@
 defmodule TelegramEx do
+  @moduledoc """
+  Entry point for building Telegram bots.
+
+      defmodule MyBot do
+        use TelegramEx, name: :my_bot
+
+        def handle_message(%{text: "/start", chat: chat}) do
+          Message.text("Hello!") |> Message.send(chat["id"])
+        end
+      end
+  """
+
   @callback handle_message(message :: map()) :: any()
   @callback handle_callback(callback :: map()) :: any()
 
@@ -9,14 +21,14 @@ defmodule TelegramEx do
       import TelegramEx
       import TelegramEx.FSM, only: [defstate: 2]
       alias TelegramEx.{API, Config, FSM}
-      alias TelegramEx.Builder.{Message, Photo, Document}
+      alias TelegramEx.Builder.{Document, Message, Photo}
 
       @bot_name Keyword.fetch!(unquote(opts), :name)
 
       def child_spec(_) do
         %{
           id: __MODULE__,
-          start: {TelegramEx.Server, :start_link, [__MODULE__, Config.token(@bot_name)]},
+          start: {TelegramEx.Server, :start_link, [__MODULE__, @bot_name]},
           type: :worker
         }
       end

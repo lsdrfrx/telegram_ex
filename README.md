@@ -63,7 +63,7 @@ These handlers receive only the incoming update and do not depend on FSM state o
 
 ```elixir
 defmodule MyBot do
-  use TelegramEx
+  use TelegramEx, name: :my_bot
 
   def handle_message(%{text: "/start", chat: chat}) do
     Message.text("Welcome")
@@ -86,7 +86,7 @@ Use this style when the handler does not need to remember anything between updat
 
 ```elixir
 defmodule MyBot do
-  use TelegramEx
+  use TelegramEx, name: :my_bot
 
   def handle_message(%{text: "/start", chat: chat}) do
     Message.text("Welcome")
@@ -113,6 +113,26 @@ Handlers can return:
 - `{:transition, state}` - change the current state and keep existing data
 - `{:transition, state, data}` - change the current state and replace stored data
 - `{:error, reason}` - log a handler error
+
+## FSM API
+
+You can interact with the FSM directly to read or manipulate state programmatically:
+
+```elixir
+alias TelegramEx.FSM
+
+# Get current state and data for a user
+{state, data} = FSM.get_state(:my_bot, chat_id)
+
+# Set state only (keeps existing data)
+FSM.set_state(:my_bot, chat_id, :waiting_input)
+
+# Set state and replace data
+FSM.set_state(:my_bot, chat_id, :waiting_input, %{retries: 0})
+
+# Reset state (removes stored entry)
+FSM.reset_state(:my_bot, chat_id)
+```
 
 ## Sending Messages
 
@@ -226,7 +246,7 @@ end
 
 ## Handling Callback Queries
 
-When a user presses an inline keyboard button, `handle_callback/1` is called:
+When a user presses an inline keyboard button, `handle_callback/1` is called with a `%TelegramEx.Types.CallbackQuery{}` struct:
 
 ```elixir
 def handle_callback(%{data: "btn_1"} = callback) do
@@ -243,23 +263,18 @@ end
 To show an alert or update the user after a callback:
 
 ```elixir
-def handle_callback(%{data: data, chat: chat} = callback) do
+def handle_callback(%{data: data, message: %{chat: chat}} = callback) do
   Message.text("Processed: #{data}")
   |> Message.answer_callback_query(callback)
   |> Message.send(chat["id"])
 end
-
-# Or simply answer callback without sending message
-def handle_callback(callback) do
-  Message.answer_callback_query(callback)
-end
 ```
 
-**Callback Query Structure:**
+**Callback Query Structure** (`%TelegramEx.Types.CallbackQuery{}`):
 
 - `:id` - Unique identifier for the callback query
 - `:from` - User who triggered the callback (map with string keys)
-- `:message` - The message the callback was attached to
+- `:message` - The `%TelegramEx.Types.Message{}` the callback was attached to
 - `:inline_message_id` - Identifier of the inline message (if applicable)
 - `:chat_instance` - Global identifier for the chat
 - `:data` - Data associated with the callback button
@@ -286,7 +301,7 @@ The `handle_message/1` callback receives a `%TelegramEx.Types.Message{}` struct 
 
 ```elixir
 defmodule EchoBot do
-  use TelegramEx
+  use TelegramEx, name: :echo_bot
 
   def handle_message(%{text: text, chat: chat}) do
     Message.text("Echo: #{text}")
@@ -299,7 +314,7 @@ end
 
 ```elixir
 defmodule MyBot do
-  use TelegramEx
+  use TelegramEx, name: :my_bot
 
   def handle_message(%{text: "/start", chat: chat}) do
     Message.text("Welcome! Send me any message.")
@@ -312,3 +327,45 @@ defmodule MyBot do
   end
 end
 ```
+
+## Roadmap
+
+### Sending Messages
+- [x] Text messages
+- [x] Photos (local & remote)
+- [x] Documents (local & remote)
+- [ ] Stickers
+- [ ] Video
+- [ ] Location
+- [ ] Polls
+- [ ] Quizzes
+- [ ] Contacts
+
+### Keyboards
+- [x] Inline keyboard
+- [x] Reply keyboard
+
+### Message Management
+- [ ] Edit message text
+- [ ] Edit message caption
+- [ ] Delete message
+
+### Group Actions
+- [ ] Get chat members
+- [ ] Ban user
+- [ ] Kick user
+- [ ] Restrict user
+
+### Chat Effects
+- [ ] Typing indicator
+- [ ] Recording voice indicator
+
+### Integrations & Infrastructure
+- [x] FSM
+- [ ] Webhooks
+- [ ] Middlewares
+- [ ] Rate limiting
+- [ ] Task scheduler
+- [ ] Internationalization
+- [ ] Backpex integration
+- [ ] Routers

@@ -1,85 +1,115 @@
 defmodule TelegramEx.Server do
+  @moduledoc """
+  GenServer that long-polls Telegram for updates and dispatches them to the bot module.
+  Started automatically via `child_spec/1` injected by `use TelegramEx`.
+  """
+
   use GenServer
   require Logger
-  alias TelegramEx.{API, Types, FSM}
+  alias TelegramEx.{API, Config, FSM, Types}
 
-  def start_link(bot_module, token),
-    do: GenServer.start_link(__MODULE__, {bot_module, token}, name: bot_module)
+  @type chat_id :: TelegramEx.Types.chat_id()
 
-  def init({bot_module, token}) do
-    FSM.init()
+  @type state :: %{
+          bot_module: module(),
+          bot_name: atom(),
+          token: String.t(),
+          offset: integer()
+        }
 
-    state = %{
-      bot_module: bot_module,
-      token: token,
-      offset: 0
-    }
+  @spec start_link(module(), atom()) :: GenServer.on_start()
+  def start_link(bot_module, bot_name),
+    do: GenServer.start_link(__MODULE__, {bot_module, bot_name}, name: bot_name)
 
-    {:ok, state, {:continue, :start_polling}}
+  @impl true
+  def init({bot_module, bot_name}) do
+    case FSM.init(bot_name) do
+      :ok ->
+        state = %{
+          bot_module: bot_module,
+          bot_name: bot_name,
+          token: Config.token(bot_name),
+          offset: 0
+        }
+
+        {:ok, state, {:continue, :start_polling}}
+
+      {:error, reason} ->
+        Logger.error("FSM initialization failed: #{reason}")
+        {:stop, reason}
+    end
   end
 
+  @impl true
   def handle_continue(:start_polling, state) do
     Task.start_link(fn -> poll_updates(state) end)
     {:noreply, state}
   end
 
-  defp poll_updates(
-         %{bot_module: bot_module, token: token, offset: offset} =
-           state
-       ) do
+  @spec poll_updates(state()) :: no_return()
+  defp poll_updates(%{token: token, offset: offset} = state) do
     Process.put(:token, token)
 
     case API.get_updates(token, offset) do
       {:ok, updates} ->
-        Enum.each(updates, &process_update(&1, bot_module))
+        Enum.each(updates, &process_update(&1, state))
 
         new_offset =
           case updates do
-            [] -> state.offset
+            [] -> offset
             updates -> List.last(updates)["update_id"] + 1
           end
 
         poll_updates(%{state | offset: new_offset})
 
       {:error, reason} ->
-        IO.inspect(reason)
+        Logger.error("Error while getting update: #{reason}")
         poll_updates(state)
     end
   end
 
-  defp process_update(update, bot_module) do
+  @spec process_update(map(), state()) :: :ok | {:error, term()}
+  defp process_update(update, %{bot_module: bot_module, bot_name: bot_name}) do
     cond do
       update["message"] ->
         update["message"]
         |> parse_message()
-        |> run_handler(bot_module, :handle_message)
+        |> run_handler(bot_module, bot_name, :handle_message)
 
       update["callback_query"] ->
         update["callback_query"]
         |> parse_callback_query()
-        |> run_handler(bot_module, :handle_callback)
+        |> run_handler(bot_module, bot_name, :handle_callback)
+
+      true ->
+        :ok
     end
   end
 
-  defp run_handler(message, bot_module, handler) do
-    current_state = FSM.get_current_state(message.chat["id"])
+  @spec run_handler(
+          Types.Message.t() | Types.CallbackQuery.t(),
+          module(),
+          atom(),
+          atom()
+        ) :: :ok | {:error, term()}
+  defp run_handler(message, bot_module, bot_name, handler) do
+    chat_id = get_chat_id(message)
+    {state, data} = FSM.get_state(bot_name, chat_id)
 
-    if function_exported?(bot_module, handler, 3) and current_state do
-      data = FSM.get_data(message.chat["id"])
-      apply(bot_module, handler, [message, current_state, data])
+    if function_exported?(bot_module, handler, 3) and state do
+      apply(bot_module, handler, [message, state, data])
     else
       apply(bot_module, handler, [message])
     end
     |> case do
       {:transition, new_state, data} ->
-        FSM.transition_to(message.chat["id"], new_state)
-        FSM.set_data(message.chat["id"], data)
+        FSM.set_state(bot_name, chat_id, new_state, data)
 
       {:transition, new_state} ->
-        FSM.transition_to(message.chat["id"], new_state)
+        FSM.set_state(bot_name, chat_id, new_state)
 
       {:stay, data} ->
-        FSM.set_data(message.chat["id"], data)
+        FSM.set_state(bot_name, chat_id, state, data)
 
       :ok ->
         :ok
@@ -92,6 +122,13 @@ defmodule TelegramEx.Server do
     end
   end
 
+  @spec get_chat_id(Types.Message.t() | Types.CallbackQuery.t()) :: chat_id()
+  defp get_chat_id(%Types.CallbackQuery{message: %{chat: chat}}), do: chat["id"]
+  defp get_chat_id(%Types.Message{chat: chat}), do: chat["id"]
+
+  @spec parse_message(map()) :: Types.Message.t()
   defp parse_message(message), do: Types.Message.from_map(message)
+
+  @spec parse_callback_query(map()) :: Types.CallbackQuery.t()
   defp parse_callback_query(callback_query), do: Types.CallbackQuery.from_map(callback_query)
 end

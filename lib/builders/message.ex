@@ -1,4 +1,12 @@
 defmodule TelegramEx.Builder.Message do
+  @moduledoc """
+  Builder for text message payloads.
+
+      Message.text("Hello", "Markdown")
+      |> Message.inline_keyboard([[%{text: "OK", callback_data: "ok"}]])
+      |> Message.send(chat_id)
+  """
+
   alias TelegramEx.API
 
   def text(text) do

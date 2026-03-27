@@ -30,3 +30,6 @@ telegram_ex-*.tar
 .DS_Store
 
 .tool-versions
+
+# Dialyzer PLT files
+/priv/plts/

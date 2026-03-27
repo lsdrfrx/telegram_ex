@@ -5,13 +5,14 @@ defmodule TelegramEx.MixProject do
     [
       app: :telegram_ex,
       name: "TelegramEx",
-      version: "1.0.0",
+      version: "1.1.0",
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       build_embedded: Mix.env() == :prod,
       package: package(),
       description: description(),
       deps: deps(),
+      dialyzer: dialyzer(),
       source_url: "https://github.com/lsdrfrx/telegram_ex"
     ]
   end
@@ -25,8 +26,18 @@ defmodule TelegramEx.MixProject do
   defp deps do
     [
       {:req, "~> 0.5"},
+      {:pockets, "~> 1.5.0"},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.14", only: :dev, runtime: false}
+    ]
+  end
+
+  defp dialyzer do
+    [
+      plt_local_path: "priv/plts/project.plt",
+      plt_core_path: "priv/plts/core.plt",
+      flags: [:error_handling, :missing_return, :extra_return, :underspecs]
     ]
   end
 

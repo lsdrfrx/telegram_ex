@@ -7,12 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 27-03-2026
+
 ### Added
 - `TelegramEx.FSM` module with `defstate/2` macro to make stateful handlers
 - Multiple bot support via names
 - Fallback update handlers
 
-## [1.0.0]
+## [1.0.0] - 08-03-2026
 
 ### Added
 - `TelegramEx` macro for wrapping user module into GenServer

@@ -1,6 +1,17 @@
 defmodule TelegramEx.API do
-  require Logger
+  @moduledoc """
+  HTTP wrapper around the Telegram Bot API.
 
+      API.send_message(token, %{chat_id: 123, text: "Hi"})
+      API.send_photo(token, %{chat_id: 123, photo: "https://..."})
+  """
+
+  require Logger
+  alias TelegramEx.Types
+
+  @type updates :: Types.updates()
+
+  @spec get_updates(String.t(), integer()) :: {:ok, updates()} | {:error, any()}
   def get_updates(token, offset) do
     case Req.get("https://api.telegram.org/bot#{token}/getUpdates?offset=#{offset}") do
       {:ok, %{status: 200, body: %{"ok" => true, "result" => updates}}} ->
@@ -15,16 +26,19 @@ defmodule TelegramEx.API do
     end
   end
 
+  @spec send_message(String.t(), map()) :: :ok | {:error, any()}
   def send_message(token, message) do
     Req.post("https://api.telegram.org/bot#{token}/sendMessage", json: message)
     |> handle_response()
   end
 
+  @spec send_photo(String.t(), map()) :: :ok | {:error, any()}
   def send_photo(token, photo) do
     Req.post("https://api.telegram.org/bot#{token}/sendPhoto", form_multipart: photo)
     |> handle_response()
   end
 
+  @spec answer_callback_query(String.t(), String.t()) :: :ok | {:error, any()}
   def answer_callback_query(token, callback) do
     Req.post("https://api.telegram.org/bot#{token}/answerCallbackQuery",
       json: %{callback_query_id: callback}
@@ -32,6 +46,7 @@ defmodule TelegramEx.API do
     |> handle_response()
   end
 
+  @spec send_document(String.t(), map()) :: :ok | {:error, any()}
   def send_document(token, document) do
     Req.post("https://api.telegram.org/bot#{token}/sendDocument",
       form_multipart: document

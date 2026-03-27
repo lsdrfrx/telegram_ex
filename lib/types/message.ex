@@ -1,4 +1,20 @@
 defmodule TelegramEx.Types.Message do
+  @moduledoc "Struct representing a Telegram Message object."
+
+  @type t :: %__MODULE__{
+          message_id: integer(),
+          from: map(),
+          chat: map(),
+          date: integer(),
+          text: String.t() | nil,
+          photo: list(map()) | nil,
+          document: map() | nil,
+          sticker: map() | nil,
+          video: map() | nil,
+          voice: map() | nil,
+          caption: String.t() | nil
+        }
+
   defstruct [
     :message_id,
     :from,

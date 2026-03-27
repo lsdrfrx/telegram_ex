@@ -1,4 +1,12 @@
 defmodule TelegramEx.Builder.Photo do
+  @moduledoc """
+  Builder for photo payloads.
+
+      Photo.path("/tmp/img.jpg")
+      |> Photo.caption("Look at this")
+      |> Photo.send(chat_id)
+  """
+
   alias TelegramEx.API
 
   def url(url) do

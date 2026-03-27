@@ -1,48 +1,42 @@
 defmodule TelegramEx.FSM do
-  @table :telegram_ex_table
-  def init() do
-    :ets.new(@table, [:set, :public, :named_table])
-  end
+  @moduledoc """
+  Per-user FSM backed by Pockets (ETS). Stores `{state, data}` keyed by chat ID.
 
-  def reset_state(id) do
-    set_current_state(id, nil, %{})
-  end
+      FSM.set_state(bot_name, chat_id, :waiting_name)
+      FSM.set_state(bot_name, chat_id, :waiting_name, %{step: 1})
 
-  def get_current_state(id) do
-    case :ets.lookup(@table, id) do
-      [{_id, {state, _data}} | _] -> state
-      [] -> nil
+      FSM.get_state(bot_name, chat_id)  # => {:waiting_name, %{step: 1}}
+  """
+
+  @type chat_id :: TelegramEx.Types.chat_id()
+
+  @spec init(atom()) :: :ok | {:error, term()}
+  def init(name) do
+    case Pockets.new(name) do
+      {:ok, _} -> :ok
+      {:error, reason} -> {:error, reason}
     end
   end
 
-  def transition_to(id, state) do
-    set_current_state(id, state)
+  @spec reset_state(atom(), chat_id()) :: atom() | {:error, term()}
+  def reset_state(name, id) do
+    Pockets.delete(name, id)
   end
 
-  def set_data(id, data) do
-    case :ets.lookup(@table, id) do
-      [{_id, {state, _}} | _] ->
-        :ets.insert(@table, {id, {state, data}})
-
-      [] ->
-        :ets.insert(@table, {id, {nil, data}})
-    end
+  @spec get_state(atom(), chat_id()) :: {term(), term()}
+  def get_state(name, id) do
+    Pockets.get(name, id, {nil, nil})
   end
 
-  def get_data(id) do
-    case :ets.lookup(@table, id) do
-      [{_id, {_state, data}} | _] -> data
-      [] -> %{}
-    end
+  @spec set_state(atom(), chat_id(), atom()) :: atom() | {:error, term()}
+  def set_state(name, id, state) do
+    {_, data} = get_state(name, id)
+    Pockets.put(name, id, {state, data})
   end
 
-  def set_current_state(id, state) do
-    existing_data = get_data(id)
-    :ets.insert(@table, {id, {state, existing_data}})
-  end
-
-  def set_current_state(id, state, data) do
-    :ets.insert(@table, {id, {state, data}})
+  @spec set_state(atom(), chat_id(), atom(), term()) :: atom() | {:error, term()}
+  def set_state(name, id, state, data) do
+    Pockets.put(name, id, {state, data})
   end
 
   defmacro defstate(state, do: block) do

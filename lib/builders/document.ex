@@ -32,8 +32,8 @@ defmodule TelegramEx.Builder.Document do
     |> Map.put(:parse_mode, parse_mode)
   end
 
-  def silent(message) do
-    Map.put(message, :disable_notification, true)
+  def silent(document) do
+    Map.put(document, :disable_notification, true)
   end
 
   def send(document, id) do

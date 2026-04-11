@@ -31,8 +31,8 @@ defmodule TelegramEx.Builder.Sticker do
     }
   end
 
-  def silent(message) do
-    Map.put(message, :disable_notification, true)
+  def silent(sticker) do
+    Map.put(sticker, :disable_notification, true)
   end
 
   def send(sticker, id) do

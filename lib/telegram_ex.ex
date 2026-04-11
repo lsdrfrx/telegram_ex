@@ -21,7 +21,7 @@ defmodule TelegramEx do
       import TelegramEx
       import TelegramEx.FSM, only: [defstate: 2]
       alias TelegramEx.{API, Config, FSM}
-      alias TelegramEx.Builder.{Document, Location, Message, Photo, Sticker}
+      alias TelegramEx.Builder.{Document, Location, Message, Photo, Sticker, Video}
 
       @bot_name Keyword.fetch!(unquote(opts), :name)
 

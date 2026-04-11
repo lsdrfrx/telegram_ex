@@ -32,8 +32,8 @@ defmodule TelegramEx.Builder.Photo do
     |> Map.put(:parse_mode, parse_mode)
   end
 
-  def silent(message) do
-    Map.put(message, :disable_notification, true)
+  def silent(photo) do
+    Map.put(photo, :disable_notification, true)
   end
 
   def send(photo, id) do

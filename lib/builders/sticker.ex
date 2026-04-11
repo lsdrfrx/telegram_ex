@@ -38,6 +38,6 @@ defmodule TelegramEx.Builder.Sticker do
   def send(sticker, id) do
     sticker
     |> Map.put(:chat_id, id)
-    |> then(&API.send_sticker(Process.get(:token), &1))
+    |> then(&API.request(Process.get(:token), "sendSticker", &1, format: :multipart))
   end
 end

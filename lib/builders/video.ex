@@ -53,6 +53,6 @@ defmodule TelegramEx.Builder.Video do
   def send(video, id) do
     video
     |> Map.put(:chat_id, id)
-    |> then(&API.send_video(Process.get(:token), &1))
+    |> then(&API.request(Process.get(:token), "sendVideo", &1, format: :multipart))
   end
 end

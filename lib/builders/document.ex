@@ -39,6 +39,6 @@ defmodule TelegramEx.Builder.Document do
   def send(document, id) do
     document
     |> Map.put(:chat_id, id)
-    |> then(&API.send_document(Process.get(:token), &1))
+    |> then(&API.request(Process.get(:token), "sendDocument", &1, format: :multipart))
   end
 end

@@ -26,50 +26,25 @@ defmodule TelegramEx.API do
     end
   end
 
-  @spec send_message(String.t(), map()) :: :ok | {:error, any()}
-  def send_message(token, message) do
-    Req.post("https://api.telegram.org/bot#{token}/sendMessage", json: message)
-    |> handle_response()
-  end
+  def request(token, method, payload, opts \\ [format: :json]) do
+    case opts[:format] do
+      :json ->
+        Req.post("https://api.telegram.org/bot#{token}/#{method}", json: payload)
+        |> handle_response()
 
-  @spec send_photo(String.t(), map()) :: :ok | {:error, any()}
-  def send_photo(token, photo) do
-    Req.post("https://api.telegram.org/bot#{token}/sendPhoto", form_multipart: photo)
-    |> handle_response()
-  end
+      :multipart ->
+        Req.post("https://api.telegram.org/bot#{token}/#{method}", form_multipart: payload)
+        |> handle_response()
 
-  def send_sticker(token, sticker) do
-    Req.post("https://api.telegram.org/bot#{token}/sendSticker", form_multipart: sticker)
-    |> handle_response()
-  end
-
-  def send_location(token, location) do
-    Req.post("https://api.telegram.org/bot#{token}/sendLocation", json: location)
-    |> handle_response()
-  end
-
-  def send_video(token, video) do
-    Req.post("https://api.telegram.org/bot#{token}/sendVideo", form_multipart: video)
-    |> handle_response()
-  end
-
-  def send_contact(token, contact) do
-    Req.post("https://api.telegram.org/bot#{token}/sendContact", json: contact)
-    |> handle_response()
+      _ ->
+        {:error, :invalid_format}
+    end
   end
 
   @spec answer_callback_query(String.t(), String.t()) :: :ok | {:error, any()}
   def answer_callback_query(token, callback) do
     Req.post("https://api.telegram.org/bot#{token}/answerCallbackQuery",
       json: %{callback_query_id: callback}
-    )
-    |> handle_response()
-  end
-
-  @spec send_document(String.t(), map()) :: :ok | {:error, any()}
-  def send_document(token, document) do
-    Req.post("https://api.telegram.org/bot#{token}/sendDocument",
-      form_multipart: document
     )
     |> handle_response()
   end

@@ -15,6 +15,6 @@ defmodule TelegramEx.Builder.Location do
   def send(location, id) do
     location
     |> Map.put(:chat_id, id)
-    |> then(&API.send_location(Process.get(:token), &1))
+    |> then(&API.request(Process.get(:token), "sendLocation", &1))
   end
 end

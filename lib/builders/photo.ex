@@ -39,6 +39,6 @@ defmodule TelegramEx.Builder.Photo do
   def send(photo, id) do
     photo
     |> Map.put(:chat_id, id)
-    |> then(&API.send_photo(Process.get(:token), &1))
+    |> then(&API.request(Process.get(:token), "sendPhoto", &1, format: :multipart))
   end
 end

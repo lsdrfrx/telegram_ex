@@ -30,6 +30,6 @@ defmodule TelegramEx.Builder.Contact do
   def send(contact, id) do
     contact
     |> Map.put(:chat_id, id)
-    |> then(&API.send_contact(Process.get(:token), &1))
+    |> then(&API.request(Process.get(:token), "sendContact", &1))
   end
 end

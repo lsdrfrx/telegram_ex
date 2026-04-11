@@ -43,6 +43,11 @@ defmodule TelegramEx.API do
     |> handle_response()
   end
 
+  def send_location(token, location) do
+    Req.post("https://api.telegram.org/bot#{token}/sendLocation", json: location)
+    |> handle_response()
+  end
+
   @spec answer_callback_query(String.t(), String.t()) :: :ok | {:error, any()}
   def answer_callback_query(token, callback) do
     Req.post("https://api.telegram.org/bot#{token}/answerCallbackQuery",

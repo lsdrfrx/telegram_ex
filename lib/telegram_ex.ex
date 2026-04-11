@@ -24,11 +24,12 @@ defmodule TelegramEx do
       alias TelegramEx.Builder.{Document, Message, Photo}
 
       @bot_name Keyword.fetch!(unquote(opts), :name)
+      @routers Keyword.get(unquote(opts), :routers, [])
 
       def child_spec(_) do
         %{
           id: __MODULE__,
-          start: {TelegramEx.Server, :start_link, [__MODULE__, @bot_name]},
+          start: {TelegramEx.Server, :start_link, [__MODULE__, @bot_name, @routers]},
           type: :worker
         }
       end

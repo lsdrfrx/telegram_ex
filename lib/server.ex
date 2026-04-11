@@ -17,17 +17,18 @@ defmodule TelegramEx.Server do
           offset: integer()
         }
 
-  @spec start_link(module(), atom()) :: GenServer.on_start()
-  def start_link(bot_module, bot_name),
-    do: GenServer.start_link(__MODULE__, {bot_module, bot_name}, name: bot_name)
+  @spec start_link(module(), atom(), list(module())) :: GenServer.on_start()
+  def start_link(bot_module, bot_name, routers \\ []),
+    do: GenServer.start_link(__MODULE__, {bot_module, bot_name, routers}, name: bot_name)
 
   @impl true
-  def init({bot_module, bot_name}) do
+  def init({bot_module, bot_name, routers}) do
     case FSM.init(bot_name) do
       :ok ->
         state = %{
           bot_module: bot_module,
           bot_name: bot_name,
+          routers: routers,
           token: Config.token(bot_name),
           offset: 0
         }
@@ -69,17 +70,17 @@ defmodule TelegramEx.Server do
   end
 
   @spec process_update(map(), state()) :: :ok | {:error, term()}
-  defp process_update(update, %{bot_module: bot_module, bot_name: bot_name}) do
+  defp process_update(update, %{bot_module: bot_module, bot_name: bot_name, routers: routers}) do
     cond do
       update["message"] ->
         update["message"]
         |> parse_message()
-        |> run_handler(bot_module, bot_name, :handle_message)
+        |> run_handler(bot_module, bot_name, routers, :handle_message)
 
       update["callback_query"] ->
         update["callback_query"]
         |> parse_callback_query()
-        |> run_handler(bot_module, bot_name, :handle_callback)
+        |> run_handler(bot_module, bot_name, routers, :handle_callback)
 
       true ->
         :ok
@@ -90,16 +91,23 @@ defmodule TelegramEx.Server do
           Types.Message.t() | Types.CallbackQuery.t(),
           module(),
           atom(),
+          list(module()),
           atom()
         ) :: :ok | {:error, term()}
-  defp run_handler(message, bot_module, bot_name, handler) do
+  defp run_handler(message, bot_module, bot_name, routers, handler) do
     chat_id = get_chat_id(message)
     {state, data} = FSM.get_state(bot_name, chat_id)
 
-    if function_exported?(bot_module, handler, 3) and state do
-      apply(bot_module, handler, [message, state, data])
+    router =
+      Enum.find(routers ++ [bot_module], fn router ->
+        function_exported?(router, handler, 1) or
+          function_exported?(router, handler, 3)
+      end)
+
+    if function_exported?(router, handler, 3) and state do
+      apply(router, handler, [message, state, data])
     else
-      apply(bot_module, handler, [message])
+      apply(router, handler, [message])
     end
     |> case do
       {:transition, new_state, data} ->

@@ -2,57 +2,71 @@ defmodule TelegramEx.Builder.Video do
   @moduledoc """
   Builder for video payloads.
 
-      Video.path("/tmp/video.mp4")
+      Video.path(ctx, "/tmp/video.mp4")
       |> Video.send(chat_id)
 
-      Video.url("https://example.com/video.mp4")
+      Video.url(ctx, "https://example.com/video.mp4")
       |> Video.send(chat_id)
 
-      Video.id("example_file_id")
+      Video.id(ctx, "example_file_id")
       |> Video.send(chat_id)
   """
 
   alias TelegramEx.API
 
-  def id(id) do
-    %{video: id}
+  def id(ctx, id) do
+    Map.get(ctx, :payload, %{})
+    |> Map.put(:video, id)
+    |> then(&Map.put(ctx, :payload, &1))
   end
 
-  def url(url) do
-    %{video: url}
+  def url(ctx, url) do
+    Map.get(ctx, :payload, %{})
+    |> Map.put(:video, url)
+    |> then(&Map.put(ctx, :payload, &1))
   end
 
-  def path(path) do
+  def path(ctx, path) do
     filename = Path.basename(path)
     content = File.read!(path)
 
-    %{
-      video: {content, filename: filename, content_type: "video/mp4"}
-    }
+    Map.get(ctx, :payload, %{})
+    |> Map.put(:video, {content, filename: filename, content_type: "video/mp4"})
+    |> then(&Map.put(ctx, :payload, &1))
   end
 
-  def duration(video, seconds) do
-    Map.put(video, :duration, seconds)
+  def duration(ctx, seconds) do
+    Map.get(ctx, :payload, %{})
+    |> Map.put(:duration, seconds)
+    |> then(&Map.put(ctx, :payload, &1))
   end
 
-  def cover_path(video, path) do
+  def cover_path(ctx, path) do
     filename = Path.basename(path)
     content = File.read!(path)
 
-    Map.put(video, :cover, {content, filename: filename, content_type: "image/jpeg"})
+    Map.get(ctx, :payload, %{})
+    |> Map.put(:cover, {content, filename: filename, content_type: "image/jpeg"})
+    |> then(&Map.put(ctx, :payload, &1))
   end
 
-  def cover_url(video, url) do
-    Map.put(video, :cover, url)
+  def cover_url(ctx, url) do
+    Map.get(ctx, :payload, %{})
+    |> Map.put(:cover, url)
+    |> then(&Map.put(ctx, :payload, &1))
   end
 
-  def silent(video) do
-    Map.put(video, :disable_notification, true)
+  def silent(ctx) do
+    Map.get(ctx, :payload, %{})
+    |> Map.put(:disable_notification, true)
+    |> then(&Map.put(ctx, :payload, &1))
   end
 
-  def send(video, id) do
-    video
+  def send(ctx, id) do
+    ctx
     |> Map.put(:chat_id, id)
-    |> then(&API.request(Process.get(:token), "sendVideo", &1, format: :multipart))
+    |> Map.put(:method, "sendVideo")
+    |> Map.put(:format, :multipart)
+    |> API.request()
   end
 end

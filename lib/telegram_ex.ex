@@ -5,14 +5,16 @@ defmodule TelegramEx do
       defmodule MyBot do
         use TelegramEx, name: :my_bot
 
-        def handle_message(%{text: "/start", chat: chat}) do
-          Message.text("Hello!") |> Message.send(chat["id"])
+        def handle_message(%{text: "/start", chat: chat}, ctx) do
+          ctx
+          |> Message.text("Hello!")
+          |> Message.send(chat["id"])
         end
       end
   """
 
-  @callback handle_message(message :: map()) :: any()
-  @callback handle_callback(callback :: map()) :: any()
+  @callback handle_message(message :: map(), context :: map()) :: any()
+  @callback handle_callback(callback :: map(), context :: map()) :: any()
 
   defmacro __using__(opts) do
     quote do
@@ -39,8 +41,8 @@ defmodule TelegramEx do
 
   defmacro __before_compile__(_env) do
     quote do
-      def handle_message(_message), do: :ok
-      def handle_callback(_callback), do: :ok
+      def handle_message(_message, _ctx), do: :ok
+      def handle_callback(_callback, _ctx), do: :ok
     end
   end
 end

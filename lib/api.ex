@@ -26,8 +26,15 @@ defmodule TelegramEx.API do
     end
   end
 
-  def request(token, method, payload, opts \\ [format: :json]) do
-    case opts[:format] do
+  def request(%{chat_id: chat_id, token: token, method: method, payload: payload} = ctx) do
+    payload = Map.put(payload, :chat_id, chat_id)
+
+    payload =
+      if Map.get(ctx, :message_thread_id),
+        do: Map.put(payload, :message_thread_id, ctx.message_thread_id),
+        else: payload
+
+    case ctx[:format] do
       :json ->
         Req.post("https://api.telegram.org/bot#{token}/#{method}", json: payload)
         |> handle_response()

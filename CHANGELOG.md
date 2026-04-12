@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `TelegramEx.Builder.Contact` for sending contacts
 - Example project in `example/` folder as quick review of all features
 - Sending messages to concrete threads in forum chats via `message_thread_id`
+- `TelegramEx.Router` macro to group handlers by logic into routers
 
 ### Changed
 

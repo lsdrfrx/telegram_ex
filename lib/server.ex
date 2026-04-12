@@ -14,6 +14,7 @@ defmodule TelegramEx.Server do
           bot_module: module(),
           bot_name: atom(),
           token: String.t(),
+          routers: list(module()),
           offset: integer()
         }
 
@@ -107,7 +108,14 @@ defmodule TelegramEx.Server do
         ctx
       end
 
-    apply(bot_module, handler, [message, ctx])
+    modules = routers ++ [bot_module]
+
+    Enum.reduce_while(modules, :pass, fn module, :pass ->
+      case apply(module, handler, [message, ctx]) do
+        :pass -> {:cont, :pass}
+        result -> {:halt, result}
+      end
+    end)
     |> case do
       {:transition, new_state, data} ->
         FSM.set_state(bot_name, chat_id, new_state, data)
@@ -119,6 +127,9 @@ defmodule TelegramEx.Server do
         FSM.set_state(bot_name, chat_id, state, data)
 
       :ok ->
+        :ok
+
+      :pass ->
         :ok
 
       {:error, reason} ->

@@ -2,43 +2,52 @@ defmodule TelegramEx.Builder.Photo do
   @moduledoc """
   Builder for photo payloads.
 
-      Photo.path("/tmp/img.jpg")
+      Photo.url(ctx, "https://...")
       |> Photo.caption("Look at this")
       |> Photo.send(chat_id)
   """
 
   alias TelegramEx.API
 
-  def url(url) do
-    %{photo: url}
+  def url(ctx, url) do
+    Map.get(ctx, :payload, %{})
+    |> Map.put(:photo, url)
+    |> then(&Map.put(ctx, :payload, &1))
   end
 
-  def path(path) do
+  def path(ctx, path) do
     filename = Path.basename(path)
     content = File.read!(path)
 
-    %{
-      photo: {content, filename: filename, content_type: "image/jpeg"}
-    }
+    Map.get(ctx, :payload, %{})
+    |> Map.put(:photo, {content, filename: filename, content_type: "image/jpeg"})
+    |> then(&Map.put(ctx, :payload, &1))
   end
 
-  def caption(photo, caption) do
-    Map.put(photo, :caption, caption)
+  def caption(ctx, caption) do
+    Map.get(ctx, :payload, %{})
+    |> Map.put(:caption, caption)
+    |> then(&Map.put(ctx, :payload, &1))
   end
 
-  def caption(photo, caption, parse_mode) do
-    photo
+  def caption(ctx, caption, parse_mode) do
+    Map.get(ctx, :payload, %{})
     |> Map.put(:caption, caption)
     |> Map.put(:parse_mode, parse_mode)
+    |> then(&Map.put(ctx, :payload, &1))
   end
 
-  def silent(message) do
-    Map.put(message, :disable_notification, true)
+  def silent(ctx) do
+    Map.get(ctx, :payload, %{})
+    |> Map.put(:disable_notification, true)
+    |> then(&Map.put(ctx, :payload, &1))
   end
 
-  def send(photo, id) do
-    photo
+  def send(ctx, id) do
+    ctx
     |> Map.put(:chat_id, id)
-    |> then(&API.send_photo(Process.get(:token), &1))
+    |> Map.put(:method, "sendPhoto")
+    |> Map.put(:format, :multipart)
+    |> API.request()
   end
 end

@@ -70,17 +70,17 @@ defmodule TelegramEx.Server do
   end
 
   @spec process_update(map(), state()) :: :ok | {:error, term()}
-  defp process_update(update, %{bot_module: bot_module, bot_name: bot_name, routers: routers}) do
+  defp process_update(update, %{bot_module: bot_module, bot_name: bot_name, token: token, routers: routers}) do
     cond do
       update["message"] ->
         update["message"]
         |> parse_message()
-        |> run_handler(bot_module, bot_name, routers, :handle_message)
+        |> run_handler(bot_module, bot_name, token, routers, :handle_message)
 
       update["callback_query"] ->
         update["callback_query"]
         |> parse_callback_query()
-        |> run_handler(bot_module, bot_name, routers, :handle_callback)
+        |> run_handler(bot_module, bot_name, token, routers, :handle_callback)
 
       true ->
         :ok
@@ -91,24 +91,23 @@ defmodule TelegramEx.Server do
           Types.Message.t() | Types.CallbackQuery.t(),
           module(),
           atom(),
+          String.t(),
           list(module()),
           atom()
         ) :: :ok | {:error, term()}
-  defp run_handler(message, bot_module, bot_name, routers, handler) do
+  defp run_handler(message, bot_module, bot_name, token, routers, handler) do
     chat_id = get_chat_id(message)
     {state, data} = FSM.get_state(bot_name, chat_id)
+    ctx = %{state: state, data: data, token: token}
 
-    router =
-      Enum.find(routers ++ [bot_module], fn router ->
-        function_exported?(router, handler, 1) or
-          function_exported?(router, handler, 3)
-      end)
+    ctx =
+      if message.message_thread_id do
+        Map.put(ctx, :message_thread_id, message.message_thread_id)
+      else
+        ctx
+      end
 
-    if function_exported?(router, handler, 3) and state do
-      apply(router, handler, [message, state, data])
-    else
-      apply(router, handler, [message])
-    end
+    apply(bot_module, handler, [message, ctx])
     |> case do
       {:transition, new_state, data} ->
         FSM.set_state(bot_name, chat_id, new_state, data)

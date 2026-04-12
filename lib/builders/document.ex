@@ -2,43 +2,52 @@ defmodule TelegramEx.Builder.Document do
   @moduledoc """
   Builder for document payloads.
 
-      Document.path("/tmp/report.pdf")
+      Document.url(ctx, "https://...")
       |> Document.caption("Report")
       |> Document.send(chat_id)
   """
 
   alias TelegramEx.API
 
-  def url(url) do
-    %{document: url}
+  def url(ctx, url) do
+    Map.get(ctx, :payload, %{})
+    |> Map.put(:document, url)
+    |> then(&Map.put(ctx, :payload, &1))
   end
 
-  def path(path) do
+  def path(ctx, path) do
     filename = Path.basename(path)
     content = File.read!(path)
 
-    %{
-      document: {content, filename: filename, content_type: "application/octet-stream"}
-    }
+    Map.get(ctx, :payload, %{})
+    |> Map.put(:document, {content, filename: filename, content_type: "application/octet-stream"})
+    |> then(&Map.put(ctx, :payload, &1))
   end
 
-  def caption(document, caption) do
-    Map.put(document, :caption, caption)
+  def caption(ctx, caption) do
+    Map.get(ctx, :payload, %{})
+    |> Map.put(:caption, caption)
+    |> then(&Map.put(ctx, :payload, &1))
   end
 
-  def caption(document, caption, parse_mode) do
-    document
+  def caption(ctx, caption, parse_mode) do
+    Map.get(ctx, :payload, %{})
     |> Map.put(:caption, caption)
     |> Map.put(:parse_mode, parse_mode)
+    |> then(&Map.put(ctx, :payload, &1))
   end
 
-  def silent(message) do
-    Map.put(message, :disable_notification, true)
+  def silent(ctx) do
+    Map.get(ctx, :payload, %{})
+    |> Map.put(:disable_notification, true)
+    |> then(&Map.put(ctx, :payload, &1))
   end
 
-  def send(document, id) do
-    document
+  def send(ctx, id) do
+    ctx
     |> Map.put(:chat_id, id)
-    |> then(&API.send_document(Process.get(:token), &1))
+    |> Map.put(:method, "sendDocument")
+    |> Map.put(:format, :multipart)
+    |> API.request()
   end
 end

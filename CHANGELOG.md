@@ -7,9 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `TelegramEx.Builder.Sticker` for sending stickers (by id, url, file path)
+- `TelegramEx.Builder.Location` for sending geo coordinates
+- `TelegramEx.Builder.Video` for sending videos (by id, url, file path) with duration and cover support
+- `TelegramEx.Builder.Contact` for sending contacts
+- Example project in `example/` folder as quick review of all features
+- Sending messages to concrete threads in forum chats via `message_thread_id`
+
+### Changed
+
+- All builders now accept `ctx` as the first argument and store payload inside `ctx.payload`
+- `API.request/1` accepts full context map instead of separate `token`, `method`, `payload` arguments
+- Builders' `send/2` delegates to `API.request/1` through context — no more `Process.get(:token)`
+
 ## [1.1.0] - 27-03-2026
 
 ### Added
+
 - `TelegramEx.FSM` module with `defstate/2` macro to make stateful handlers
 - Multiple bot support via names
 - Fallback update handlers
@@ -17,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 08-03-2026
 
 ### Added
+
 - `TelegramEx` macro for wrapping user module into GenServer
 - Polling updates inside `TelegramEx.Server`
 - Applying all user-defined handlers inside `TelegramEx` to updates in `TelegramEx.Server`

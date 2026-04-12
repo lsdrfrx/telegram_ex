@@ -12,7 +12,8 @@ defmodule TelegramEx.Types.Message do
           sticker: map() | nil,
           video: map() | nil,
           voice: map() | nil,
-          caption: String.t() | nil
+          caption: String.t() | nil,
+          message_thread_id: integer() | nil
         }
 
   defstruct [
@@ -26,12 +27,14 @@ defmodule TelegramEx.Types.Message do
     :sticker,
     :video,
     :voice,
-    :caption
+    :caption,
+    :message_thread_id
   ]
 
   def from_map(map) do
     %__MODULE__{
       message_id: map["message_id"],
+      message_thread_id: map["message_thread_id"],
       from: map["from"],
       chat: map["chat"],
       date: map["date"],

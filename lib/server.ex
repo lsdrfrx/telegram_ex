@@ -14,20 +14,22 @@ defmodule TelegramEx.Server do
           bot_module: module(),
           bot_name: atom(),
           token: String.t(),
+          routers: list(module()),
           offset: integer()
         }
 
-  @spec start_link(module(), atom()) :: GenServer.on_start()
-  def start_link(bot_module, bot_name),
-    do: GenServer.start_link(__MODULE__, {bot_module, bot_name}, name: bot_name)
+  @spec start_link(module(), atom(), list(module())) :: GenServer.on_start()
+  def start_link(bot_module, bot_name, routers \\ []),
+    do: GenServer.start_link(__MODULE__, {bot_module, bot_name, routers}, name: bot_name)
 
   @impl true
-  def init({bot_module, bot_name}) do
+  def init({bot_module, bot_name, routers}) do
     case FSM.init(bot_name) do
       :ok ->
         state = %{
           bot_module: bot_module,
           bot_name: bot_name,
+          routers: routers,
           token: Config.token(bot_name),
           offset: 0
         }
@@ -69,17 +71,17 @@ defmodule TelegramEx.Server do
   end
 
   @spec process_update(map(), state()) :: :ok | {:error, term()}
-  defp process_update(update, %{bot_module: bot_module, bot_name: bot_name, token: token}) do
+  defp process_update(update, %{bot_module: bot_module, bot_name: bot_name, token: token, routers: routers}) do
     cond do
       update["message"] ->
         update["message"]
         |> parse_message()
-        |> run_handler(bot_module, bot_name, token, :handle_message)
+        |> run_handler(bot_module, bot_name, token, routers, :handle_message)
 
       update["callback_query"] ->
         update["callback_query"]
         |> parse_callback_query()
-        |> run_handler(bot_module, bot_name, token, :handle_callback)
+        |> run_handler(bot_module, bot_name, token, routers, :handle_callback)
 
       true ->
         :ok
@@ -91,9 +93,10 @@ defmodule TelegramEx.Server do
           module(),
           atom(),
           String.t(),
+          list(module()),
           atom()
         ) :: :ok | {:error, term()}
-  defp run_handler(message, bot_module, bot_name, token, handler) do
+  defp run_handler(message, bot_module, bot_name, token, routers, handler) do
     chat_id = get_chat_id(message)
     {state, data} = FSM.get_state(bot_name, chat_id)
     ctx = %{state: state, data: data, token: token}
@@ -105,7 +108,14 @@ defmodule TelegramEx.Server do
         ctx
       end
 
-    apply(bot_module, handler, [message, ctx])
+    modules = routers ++ [bot_module]
+
+    Enum.reduce_while(modules, :pass, fn module, :pass ->
+      case apply(module, handler, [message, ctx]) do
+        :pass -> {:cont, :pass}
+        result -> {:halt, result}
+      end
+    end)
     |> case do
       {:transition, new_state, data} ->
         FSM.set_state(bot_name, chat_id, new_state, data)
@@ -117,6 +127,9 @@ defmodule TelegramEx.Server do
         FSM.set_state(bot_name, chat_id, state, data)
 
       :ok ->
+        :ok
+
+      :pass ->
         :ok
 
       {:error, reason} ->

@@ -46,11 +46,12 @@ defmodule TelegramEx.FSM do
 
         new_args =
           case args do
-            [msg_arg] ->
-              [msg_arg, state, {:_data, [], nil}]
+            [msg_arg, {:=, eq_meta, [{:%{}, map_meta, pairs}, binding]}] ->
+              [msg_arg, {:=, eq_meta, [{:%{}, map_meta, [{:state, state} | pairs]}, binding]}]
 
-            [msg_arg, data_arg] ->
-              [msg_arg, state, data_arg]
+            [msg_arg, {var_name, var_meta, var_ctx}] ->
+              binding = {var_name, var_meta, var_ctx}
+              [msg_arg, {:=, [], [{:%{}, [], [{:state, state}]}, binding]}]
 
             _ ->
               args

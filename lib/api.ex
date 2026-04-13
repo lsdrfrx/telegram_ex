@@ -48,7 +48,7 @@ defmodule TelegramEx.API do
     end
   end
 
-  @spec answer_callback_query(String.t(), String.t()) :: :ok | {:error, any()}
+  @spec answer_callback_query(String.t(), Types.CallbackQuery.t()) :: :ok | {:error, any()}
   def answer_callback_query(token, %{id: id}) do
     Req.post("https://api.telegram.org/bot#{token}/answerCallbackQuery",
       json: %{callback_query_id: id}

@@ -15,7 +15,10 @@ defmodule Example.Bot do
     ]
 
     ctx
-    |> Message.text("Welcome to *TelegramEx Demo Bot*!\n\nUse the keyboard below to explore all features.", "Markdown")
+    |> Message.text(
+      "Welcome to *TelegramEx Demo Bot*!\n\nUse the keyboard below to explore all features.",
+      "Markdown"
+    )
     |> Message.reply_keyboard(keyboard, resize_keyboard: true)
     |> Message.send(chat["id"])
   end
@@ -197,7 +200,10 @@ defmodule Example.Bot do
   # FSM transition → :admin state (handled in Admin router)
   def handle_message(%{text: "/admin", chat: chat}, ctx) do
     ctx
-    |> Message.text("Entering *admin mode*.\nAny text will be echoed as an admin command.\nSend /exit to leave.", "Markdown")
+    |> Message.text(
+      "Entering *admin mode*.\nAny text will be echoed as an admin command.\nSend /exit to leave.",
+      "Markdown"
+    )
     |> Message.send(chat["id"])
 
     {:transition, :admin}
@@ -231,7 +237,9 @@ defmodule Example.Bot do
 
   def handle_callback(%{data: "info", message: %{chat: chat}} = cb, ctx) do
     ctx
-    |> Message.text("ℹ️ This bot demonstrates all TelegramEx features:\nBuilders, keyboards, FSM, routers, callbacks.")
+    |> Message.text(
+      "ℹ️ This bot demonstrates all TelegramEx features:\nBuilders, keyboards, FSM, routers, callbacks."
+    )
     |> Message.answer_callback_query(cb)
     |> Message.send(chat["id"])
   end
@@ -244,7 +252,8 @@ defmodule Example.Bot do
   end
 
   # ── Reply keyboard echo ───────────────────────────────────────────
-  def handle_message(%{text: "Option " <> letter, chat: chat}, ctx) when letter in ["A", "B", "C"] do
+  def handle_message(%{text: "Option " <> letter, chat: chat}, ctx)
+      when letter in ["A", "B", "C"] do
     ctx
     |> Message.text("You selected: *Option #{letter}*", "Markdown")
     |> Message.send(chat["id"])

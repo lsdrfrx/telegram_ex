@@ -76,7 +76,10 @@ defmodule Example.Routers.Survey do
   defstate :survey_confirm do
     def handle_callback(%{data: "survey_confirm", message: %{chat: chat}} = cb, ctx) do
       ctx
-      |> Message.text("🎉 Survey completed!\n\nThank you, *#{ctx.data.name}* (age #{ctx.data.age})!", "Markdown")
+      |> Message.text(
+        "🎉 Survey completed!\n\nThank you, *#{ctx.data.name}* (age #{ctx.data.age})!",
+        "Markdown"
+      )
       |> Message.answer_callback_query(cb)
       |> Message.send(chat["id"])
 

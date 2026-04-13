@@ -20,7 +20,7 @@ defmodule Example.MixProject do
 
   defp deps do
     [
-      {:telegram_ex, path: "../"},
+      {:telegram_ex, path: "../"}
     ]
   end
 end

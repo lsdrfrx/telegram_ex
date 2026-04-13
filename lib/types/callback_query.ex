@@ -9,7 +9,8 @@ defmodule TelegramEx.Types.CallbackQuery do
           message: Message.t() | nil,
           inline_message_id: String.t() | nil,
           chat_instance: String.t(),
-          data: String.t()
+          data: String.t(),
+          message_thread_id: integer() | nil
         }
 
   defstruct [
@@ -18,7 +19,8 @@ defmodule TelegramEx.Types.CallbackQuery do
     :message,
     :inline_message_id,
     :chat_instance,
-    :data
+    :data,
+    :message_thread_id
   ]
 
   def from_map(map) do
@@ -28,7 +30,8 @@ defmodule TelegramEx.Types.CallbackQuery do
       message: Message.from_map(map["message"]),
       inline_message_id: map["inline_message_id"],
       chat_instance: map["chat_instance"],
-      data: map["data"]
+      data: map["data"],
+      message_thread_id: map["message_thread_id"]
     }
   end
 end

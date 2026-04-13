@@ -5,7 +5,7 @@ defmodule TelegramEx.MixProject do
     [
       app: :telegram_ex,
       name: "TelegramEx",
-      version: "1.3.0",
+      version: "1.2.0",
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       build_embedded: Mix.env() == :prod,

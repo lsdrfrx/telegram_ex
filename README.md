@@ -9,6 +9,7 @@ Elixir library for building Telegram bots. Provides a simple interface for handl
 ![Last commit](https://img.shields.io/github/last-commit/lsdrfrx/telegram_ex?style=for-the-badge)
 ![Stars](https://img.shields.io/github/stars/lsdrfrx/telegram_ex?style=for-the-badge)
 ![License](https://img.shields.io/github/license/lsdrfrx/telegram_ex?style=for-the-badge)
+
 </div>
 
 ## Why This Library Exists
@@ -37,11 +38,11 @@ Create a bot module:
 defmodule MyBot do
   use TelegramEx, name: :my_bot
 
-  def handle_message(message) do
+  def handle_message(message, ctx) do
     # Handle incoming messages
   end
 
-  def handle_callback(callback) do
+  def handle_callback(callback, ctx) do
     # Handle callback queries
     :ok
   end
@@ -59,19 +60,21 @@ config :telegram_ex,
 
 ## Stateless Handlers
 
-These handlers receive only the incoming update and do not depend on FSM state or stored data.
+These handlers receive the incoming update and a context map (`ctx`). The context carries the bot token, FSM state, and is used as a pipeline accumulator for builders.
 
 ```elixir
 defmodule MyBot do
   use TelegramEx, name: :my_bot
 
-  def handle_message(%{text: "/start", chat: chat}) do
-    Message.text("Welcome")
+  def handle_message(%{text: "/start", chat: chat}, ctx) do
+    ctx
+    |> Message.text("Welcome")
     |> Message.send(chat["id"])
   end
 
-  def handle_callback(%{data: "ping", message: %{chat: chat}} = callback) do
-    Message.text("pong")
+  def handle_callback(%{data: "ping", message: %{chat: chat}} = callback, ctx) do
+    ctx
+    |> Message.text("pong")
     |> Message.answer_callback_query(callback)
     |> Message.send(chat["id"])
   end
@@ -82,25 +85,27 @@ Use this style when the handler does not need to remember anything between updat
 
 ## Stateful Handlers
 
-`defstate/2` is used when you want handlers to be selected by the current FSM state, with the state injected into pattern matching automatically. Regular handlers also can work with stored data via second argument (in this example, `data` argument), stateful handlers only use current state in pattern matching.
+`defstate/2` is used when you want handlers to be selected by the current FSM state, with the state injected into pattern matching automatically. The second argument of the handler is `ctx`, which contains `:state`, `:data`, and `:token`.
 
 ```elixir
 defmodule MyBot do
   use TelegramEx, name: :my_bot
 
-  def handle_message(%{text: "/start", chat: chat}) do
-    Message.text("Welcome")
+  def handle_message(%{text: "/start", chat: chat}, ctx) do
+    ctx
+    |> Message.text("Welcome")
     |> Message.send(chat["id"])
 
     {:transition, :started, %{step: 1}}
   end
 
   defstate :started do
-    def handle_message(%{text: text, chat: chat}, data) do
-      Message.text("You said: #{text}")
+    def handle_message(%{text: text, chat: chat}, ctx) do
+      ctx
+      |> Message.text("You said: #{text}")
       |> Message.send(chat["id"])
 
-      {:stay, Map.put(data, :last_message, text)}
+      {:stay, Map.put(ctx.data, :last_message, text)}
     end
   end
 end
@@ -136,14 +141,15 @@ FSM.reset_state(:my_bot, chat_id)
 
 ## Sending Messages
 
-Messages are sent using the `TelegramEx.Builder.Message` module:
+Messages are sent using the `TelegramEx.Builder.Message` module. All builders follow a pipeline pattern, accepting `ctx` as the first argument:
 
 ```elixir
 defmodule MyBot do
-  use TelegramEx
+  use TelegramEx, name: :my_bot
 
-  def handle_message(%{chat: chat}) do
-    Message.text("Hello!")
+  def handle_message(%{chat: chat}, ctx) do
+    ctx
+    |> Message.text("Hello!")
     |> Message.send(chat["id"])
   end
 end
@@ -151,14 +157,14 @@ end
 
 ### Message Builder Functions
 
-- `Message.text(text)` - Create a text message
-- `Message.text(text, parse_mode)` - Create a text message with parse mode (e.g., "Markdown", "HTML")
-- `Message.inline_keyboard(message, keyboard)` - Add inline keyboard
-- `Message.reply_keyboard(message, keyboard, opts)` - Add reply keyboard with options
-- `Message.remove_keyboard(message)` - Remove custom keyboard
-- `Message.silent(message)` - Send without notification
-- `Message.answer_callback_query(message, callback)` - Answer callback query
-- `Message.send(message, chat_id)` - Send the message
+- `Message.text(ctx, text)` - Create a text message
+- `Message.text(ctx, text, parse_mode)` - Create a text message with parse mode (e.g., "Markdown", "HTML")
+- `Message.inline_keyboard(ctx, keyboard)` - Add inline keyboard
+- `Message.reply_keyboard(ctx, keyboard, opts)` - Add reply keyboard with options
+- `Message.remove_keyboard(ctx)` - Remove custom keyboard
+- `Message.silent(ctx)` - Send without notification
+- `Message.answer_callback_query(ctx, callback)` - Answer callback query
+- `Message.send(ctx, chat_id)` - Send the message
 
 ## Sending Photos
 
@@ -166,10 +172,11 @@ Use `TelegramEx.Builder.Photo` to send images:
 
 ```elixir
 defmodule MyBot do
-  use TelegramEx
+  use TelegramEx, name: :my_bot
 
-  def handle_message(%{chat: chat}) do
-    Photo.path("/path/to/image.jpg")
+  def handle_message(%{chat: chat}, ctx) do
+    ctx
+    |> Photo.path("/path/to/image.jpg")
     |> Photo.caption("Here's a photo!")
     |> Photo.send(chat["id"])
   end
@@ -178,12 +185,12 @@ end
 
 ### Photo Builder Functions
 
-- `Photo.url(url)` - Send photo from URL
-- `Photo.path(path)` - Send photo from local file path
-- `Photo.caption(photo, caption)` - Add caption to photo
-- `Photo.caption(photo, caption, parse_mode)` - Add caption with parse mode
-- `Photo.silent(photo)` - Send without notification
-- `Photo.send(photo, chat_id)` - Send the photo
+- `Photo.url(ctx, url)` - Send photo from URL
+- `Photo.path(ctx, path)` - Send photo from local file path
+- `Photo.caption(ctx, caption)` - Add caption to photo
+- `Photo.caption(ctx, caption, parse_mode)` - Add caption with parse mode
+- `Photo.silent(ctx)` - Send without notification
+- `Photo.send(ctx, chat_id)` - Send the photo
 
 ## Sending Documents
 
@@ -191,10 +198,11 @@ Use `TelegramEx.Builder.Document` to send files:
 
 ```elixir
 defmodule MyBot do
-  use TelegramEx
+  use TelegramEx, name: :my_bot
 
-  def handle_message(%{chat: chat}) do
-    Document.path("/path/to/file.pdf")
+  def handle_message(%{chat: chat}, ctx) do
+    ctx
+    |> Document.path("/path/to/file.pdf")
     |> Document.caption("Here's the document")
     |> Document.send(chat["id"])
   end
@@ -203,25 +211,123 @@ end
 
 ### Document Builder Functions
 
-- `Document.url(url)` - Send document from URL
-- `Document.path(path)` - Send document from local file path
-- `Document.caption(document, caption)` - Add caption to document
-- `Document.caption(document, caption, parse_mode)` - Add caption with parse mode
-- `Document.silent(document)` - Send without notification
-- `Document.send(document, chat_id)` - Send the document
+- `Document.url(ctx, url)` - Send document from URL
+- `Document.path(ctx, path)` - Send document from local file path
+- `Document.caption(ctx, caption)` - Add caption to document
+- `Document.caption(ctx, caption, parse_mode)` - Add caption with parse mode
+- `Document.silent(ctx)` - Send without notification
+- `Document.send(ctx, chat_id)` - Send the document
+
+## Sending Stickers
+
+Use `TelegramEx.Builder.Sticker` to send stickers:
+
+```elixir
+defmodule MyBot do
+  use TelegramEx, name: :my_bot
+
+  def handle_message(%{chat: chat}, ctx) do
+    ctx
+    |> Sticker.id("CAACAgIAAxkBA...")
+    |> Sticker.send(chat["id"])
+  end
+end
+```
+
+### Sticker Builder Functions
+
+- `Sticker.id(ctx, file_id)` - Send sticker by Telegram file ID
+- `Sticker.url(ctx, url)` - Send sticker from URL
+- `Sticker.path(ctx, path)` - Send sticker from local file path
+- `Sticker.silent(ctx)` - Send without notification
+- `Sticker.send(ctx, chat_id)` - Send the sticker
+
+## Sending Videos
+
+Use `TelegramEx.Builder.Video` to send videos:
+
+```elixir
+defmodule MyBot do
+  use TelegramEx, name: :my_bot
+
+  def handle_message(%{chat: chat}, ctx) do
+    ctx
+    |> Video.path("/path/to/video.mp4")
+    |> Video.duration(120)
+    |> Video.cover_path("/path/to/cover.jpg")
+    |> Video.send(chat["id"])
+  end
+end
+```
+
+### Video Builder Functions
+
+- `Video.id(ctx, file_id)` - Send video by Telegram file ID
+- `Video.url(ctx, url)` - Send video from URL
+- `Video.path(ctx, path)` - Send video from local file path
+- `Video.duration(ctx, seconds)` - Set video duration
+- `Video.cover_path(ctx, path)` - Set cover image from local file
+- `Video.cover_url(ctx, url)` - Set cover image from URL
+- `Video.silent(ctx)` - Send without notification
+- `Video.send(ctx, chat_id)` - Send the video
+
+## Sending Locations
+
+Use `TelegramEx.Builder.Location` to send geo coordinates:
+
+```elixir
+defmodule MyBot do
+  use TelegramEx, name: :my_bot
+
+  def handle_message(%{chat: chat}, ctx) do
+    ctx
+    |> Location.coordinates(55.7558, 37.6173)
+    |> Location.send(chat["id"])
+  end
+end
+```
+
+### Location Builder Functions
+
+- `Location.coordinates(ctx, latitude, longitude)` - Set geo coordinates
+- `Location.send(ctx, chat_id)` - Send the location
+
+## Sending Contacts
+
+Use `TelegramEx.Builder.Contact` to send contacts:
+
+```elixir
+defmodule MyBot do
+  use TelegramEx, name: :my_bot
+
+  def handle_message(%{chat: chat}, ctx) do
+    ctx
+    |> Contact.contact("John", "+1234567890")
+    |> Contact.send(chat["id"])
+  end
+end
+```
+
+### Contact Builder Functions
+
+- `Contact.contact(ctx, name, phone)` - Set first name and phone number
+- `Contact.contact(ctx, first_name, last_name, phone)` - Set first name, last name, and phone number
+- `Contact.silent(ctx)` - Send without notification
+- `Contact.send(ctx, chat_id)` - Send the contact
 
 ### Keyboard Examples
 
 **Inline Keyboard:**
 
 ```elixir
-def handle_message(%{chat: chat}) do
+def handle_message(%{chat: chat}, ctx) do
   keyboard = [[
     %{text: "Button 1", callback_data: "btn_1"},
     %{text: "Button 2", callback_data: "btn_2"}
   ]]
 
-  Message.text("Choose an option:", "Markdown")
+  ctx
+  |> Message.text("Choose an option:", "Markdown")
   |> Message.inline_keyboard(keyboard)
   |> Message.send(chat["id"])
 end
@@ -230,10 +336,11 @@ end
 **Reply Keyboard:**
 
 ```elixir
-def handle_message(%{chat: chat}) do
+def handle_message(%{chat: chat}, ctx) do
   keyboard = [["/help", "/settings"], ["Contact"]]
 
-  Message.text("Use the buttons below:")
+  ctx
+  |> Message.text("Use the buttons below:")
   |> Message.reply_keyboard(keyboard, resize_keyboard: true, one_time_keyboard: true)
   |> Message.send(chat["id"])
 end
@@ -246,14 +353,14 @@ end
 
 ## Handling Callback Queries
 
-When a user presses an inline keyboard button, `handle_callback/1` is called with a `%TelegramEx.Types.CallbackQuery{}` struct:
+When a user presses an inline keyboard button, `handle_callback/2` is called with a `%TelegramEx.Types.CallbackQuery{}` struct and `ctx`:
 
 ```elixir
-def handle_callback(%{data: "btn_1"} = callback) do
+def handle_callback(%{data: "btn_1"} = callback, ctx) do
   # Handle button 1 press
 end
 
-def handle_callback(%{data: "btn_2"} = callback) do
+def handle_callback(%{data: "btn_2"} = callback, ctx) do
   # Handle button 2 press
 end
 ```
@@ -263,8 +370,9 @@ end
 To show an alert or update the user after a callback:
 
 ```elixir
-def handle_callback(%{data: data, message: %{chat: chat}} = callback) do
-  Message.text("Processed: #{data}")
+def handle_callback(%{data: data, message: %{chat: chat}} = callback, ctx) do
+  ctx
+  |> Message.text("Processed: #{data}")
   |> Message.answer_callback_query(callback)
   |> Message.send(chat["id"])
 end
@@ -281,12 +389,13 @@ end
 
 ## Message Structure
 
-The `handle_message/1` callback receives a `%TelegramEx.Types.Message{}` struct with the following fields:
+The `handle_message/2` callback receives a `%TelegramEx.Types.Message{}` struct and a `ctx` map with the following fields:
 
 - `:message_id` - Unique message identifier
 - `:from` - Sender information (map with string keys)
 - `:chat` - Chat information (map with string keys)
 - `:date` - Message date as Unix timestamp
+- `:message_thread_id` - Thread identifier in forum chats (if any)
 - `:text` - Message text content
 - `:photo` - Photo attachments (if any)
 - `:document` - Document attachment (if any)
@@ -303,8 +412,9 @@ The `handle_message/1` callback receives a `%TelegramEx.Types.Message{}` struct 
 defmodule EchoBot do
   use TelegramEx, name: :echo_bot
 
-  def handle_message(%{text: text, chat: chat}) do
-    Message.text("Echo: #{text}")
+  def handle_message(%{text: text, chat: chat}, ctx) do
+    ctx
+    |> Message.text("Echo: #{text}")
     |> Message.send(chat["id"])
   end
 end
@@ -316,56 +426,113 @@ end
 defmodule MyBot do
   use TelegramEx, name: :my_bot
 
-  def handle_message(%{text: "/start", chat: chat}) do
-    Message.text("Welcome! Send me any message.")
+  def handle_message(%{text: "/start", chat: chat}, ctx) do
+    ctx
+    |> Message.text("Welcome! Send me any message.")
     |> Message.send(chat["id"])
   end
 
-  def handle_message(%{text: text, chat: chat}) do
-    Message.text("Echo: #{text}")
+  def handle_message(%{text: text, chat: chat}, ctx) do
+    ctx
+    |> Message.text("Echo: #{text}")
     |> Message.send(chat["id"])
   end
 end
 ```
 
+## Routers
+
+Use `TelegramEx.Router` to group handlers by logic into separate modules. This keeps the main bot module clean and lets you organize handlers by domain.
+
+```elixir
+defmodule MyApp.Routers.Admin do
+  use TelegramEx.Router
+
+  defstate :admin do
+    def handle_message(%{text: "/exit", chat: chat}, ctx) do
+      ctx
+      |> Message.text("Exiting admin mode")
+      |> Message.send(chat["id"])
+
+      FSM.reset_state(:my_bot, chat["id"])
+    end
+
+    def handle_message(%{text: text, chat: chat}, ctx) do
+      ctx
+      |> Message.text("Admin command: #{text}")
+      |> Message.send(chat["id"])
+    end
+  end
+end
+```
+
+Register routers in the main bot module:
+
+```elixir
+defmodule MyBot do
+  use TelegramEx, name: :my_bot, routers: [MyApp.Routers.Admin]
+
+  def handle_message(%{text: "/admin", chat: chat}, ctx) do
+    ctx
+    |> Message.text("Entering admin mode")
+    |> Message.send(chat["id"])
+
+    {:transition, :admin}
+  end
+end
+```
+
+Routers are checked in order before the main bot module. If a router's handler returns `:pass`, the next router (or the bot module) is tried.
+
+## Forum Topics
+
+When replying to messages from forum chats (topics/threads), `message_thread_id` is handled automatically. The library injects it from the incoming message into the outgoing payload, so replies are sent to the correct thread without any extra code.
+
 ## Roadmap
 
 ### Sending Messages
+
 - [x] Text messages
 - [x] Photos (local & remote)
 - [x] Documents (local & remote)
-- [ ] Stickers
-- [ ] Video
-- [ ] Location
+- [x] Stickers
+- [x] Video
+- [x] Location
 - [ ] Polls
 - [ ] Quizzes
-- [ ] Contacts
+- [x] Contacts
 
 ### Keyboards
+
 - [x] Inline keyboard
 - [x] Reply keyboard
 
 ### Message Management
+
 - [ ] Edit message text
 - [ ] Edit message caption
 - [ ] Delete message
 
 ### Group Actions
+
 - [ ] Get chat members
 - [ ] Ban user
 - [ ] Kick user
 - [ ] Restrict user
 
 ### Chat Effects
+
 - [ ] Typing indicator
 - [ ] Recording voice indicator
 
 ### Integrations & Infrastructure
+
 - [x] FSM
+- [x] Forum topics
 - [ ] Webhooks
 - [ ] Middlewares
 - [ ] Rate limiting
 - [ ] Task scheduler
 - [ ] Internationalization
 - [ ] Backpex integration
-- [ ] Routers
+- [x] Routers

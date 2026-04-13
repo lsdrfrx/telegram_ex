@@ -26,30 +26,32 @@ defmodule TelegramEx.API do
     end
   end
 
-  @spec send_message(String.t(), map()) :: :ok | {:error, any()}
-  def send_message(token, message) do
-    Req.post("https://api.telegram.org/bot#{token}/sendMessage", json: message)
-    |> handle_response()
+  def request(%{chat_id: chat_id, token: token, method: method, payload: payload} = ctx) do
+    payload = Map.put(payload, :chat_id, chat_id)
+
+    payload =
+      if Map.get(ctx, :message_thread_id),
+        do: Map.put(payload, :message_thread_id, ctx.message_thread_id),
+        else: payload
+
+    case ctx[:format] do
+      :json ->
+        Req.post("https://api.telegram.org/bot#{token}/#{method}", json: payload)
+        |> handle_response()
+
+      :multipart ->
+        Req.post("https://api.telegram.org/bot#{token}/#{method}", form_multipart: payload)
+        |> handle_response()
+
+      _ ->
+        {:error, :invalid_format}
+    end
   end
 
-  @spec send_photo(String.t(), map()) :: :ok | {:error, any()}
-  def send_photo(token, photo) do
-    Req.post("https://api.telegram.org/bot#{token}/sendPhoto", form_multipart: photo)
-    |> handle_response()
-  end
-
-  @spec answer_callback_query(String.t(), String.t()) :: :ok | {:error, any()}
-  def answer_callback_query(token, callback) do
+  @spec answer_callback_query(String.t(), Types.CallbackQuery.t()) :: :ok | {:error, any()}
+  def answer_callback_query(token, %{id: id}) do
     Req.post("https://api.telegram.org/bot#{token}/answerCallbackQuery",
-      json: %{callback_query_id: callback}
-    )
-    |> handle_response()
-  end
-
-  @spec send_document(String.t(), map()) :: :ok | {:error, any()}
-  def send_document(token, document) do
-    Req.post("https://api.telegram.org/bot#{token}/sendDocument",
-      form_multipart: document
+      json: %{callback_query_id: id}
     )
     |> handle_response()
   end

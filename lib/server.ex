@@ -14,20 +14,22 @@ defmodule TelegramEx.Server do
           bot_module: module(),
           bot_name: atom(),
           token: String.t(),
+          routers: list(module()),
           offset: integer()
         }
 
-  @spec start_link(module(), atom()) :: GenServer.on_start()
-  def start_link(bot_module, bot_name),
-    do: GenServer.start_link(__MODULE__, {bot_module, bot_name}, name: bot_name)
+  @spec start_link(module(), atom(), list(module())) :: GenServer.on_start()
+  def start_link(bot_module, bot_name, routers \\ []),
+    do: GenServer.start_link(__MODULE__, {bot_module, bot_name, routers}, name: bot_name)
 
   @impl true
-  def init({bot_module, bot_name}) do
+  def init({bot_module, bot_name, routers}) do
     case FSM.init(bot_name) do
       :ok ->
         state = %{
           bot_module: bot_module,
           bot_name: bot_name,
+          routers: routers,
           token: Config.token(bot_name),
           offset: 0
         }
@@ -69,17 +71,22 @@ defmodule TelegramEx.Server do
   end
 
   @spec process_update(map(), state()) :: :ok | {:error, term()}
-  defp process_update(update, %{bot_module: bot_module, bot_name: bot_name}) do
+  defp process_update(update, %{
+         bot_module: bot_module,
+         bot_name: bot_name,
+         token: token,
+         routers: routers
+       }) do
     cond do
       update["message"] ->
         update["message"]
         |> parse_message()
-        |> run_handler(bot_module, bot_name, :handle_message)
+        |> run_handler(bot_module, bot_name, token, routers, :handle_message)
 
       update["callback_query"] ->
         update["callback_query"]
         |> parse_callback_query()
-        |> run_handler(bot_module, bot_name, :handle_callback)
+        |> run_handler(bot_module, bot_name, token, routers, :handle_callback)
 
       true ->
         :ok
@@ -90,37 +97,50 @@ defmodule TelegramEx.Server do
           Types.Message.t() | Types.CallbackQuery.t(),
           module(),
           atom(),
+          String.t(),
+          list(module()),
           atom()
         ) :: :ok | {:error, term()}
-  defp run_handler(message, bot_module, bot_name, handler) do
+  defp run_handler(message, bot_module, bot_name, token, routers, handler) do
     chat_id = get_chat_id(message)
     {state, data} = FSM.get_state(bot_name, chat_id)
+    ctx = %{state: state, data: data, token: token}
 
-    if function_exported?(bot_module, handler, 3) and state do
-      apply(bot_module, handler, [message, state, data])
-    else
-      apply(bot_module, handler, [message])
-    end
-    |> case do
-      {:transition, new_state, data} ->
-        FSM.set_state(bot_name, chat_id, new_state, data)
+    ctx =
+      if message.message_thread_id do
+        Map.put(ctx, :message_thread_id, message.message_thread_id)
+      else
+        ctx
+      end
 
-      {:transition, new_state} ->
-        FSM.set_state(bot_name, chat_id, new_state)
+    modules = routers ++ [bot_module]
 
-      {:stay, data} ->
-        FSM.set_state(bot_name, chat_id, state, data)
-
-      :ok ->
-        :ok
-
-      {:error, reason} ->
-        Logger.error("Handler error: #{inspect(reason)}")
-
-      error ->
-        Logger.error("Unknown handler response: #{inspect(error)}")
-    end
+    Enum.reduce_while(modules, :pass, fn module, :pass ->
+      case apply(module, handler, [message, ctx]) do
+        :pass -> {:cont, :pass}
+        result -> {:halt, result}
+      end
+    end)
+    |> handle_result(bot_name, chat_id, state)
   end
+
+  defp handle_result({:transition, new_state, data}, bot_name, chat_id, _state),
+    do: FSM.set_state(bot_name, chat_id, new_state, data)
+
+  defp handle_result({:transition, new_state}, bot_name, chat_id, _state),
+    do: FSM.set_state(bot_name, chat_id, new_state)
+
+  defp handle_result({:stay, data}, bot_name, chat_id, state),
+    do: FSM.set_state(bot_name, chat_id, state, data)
+
+  defp handle_result(:ok, _bot_name, _chat_id, _state), do: :ok
+  defp handle_result(:pass, _bot_name, _chat_id, _state), do: :ok
+
+  defp handle_result({:error, reason}, _bot_name, _chat_id, _state),
+    do: Logger.error("Handler error: #{inspect(reason)}")
+
+  defp handle_result(error, _bot_name, _chat_id, _state),
+    do: Logger.error("Unknown handler response: #{inspect(error)}")
 
   @spec get_chat_id(Types.Message.t() | Types.CallbackQuery.t()) :: chat_id()
   defp get_chat_id(%Types.CallbackQuery{message: %{chat: chat}}), do: chat["id"]

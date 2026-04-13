@@ -115,8 +115,6 @@ defmodule TelegramEx.Server do
 
     modules = routers ++ [bot_module]
 
-    modules = routers ++ [bot_module]
-
     Enum.reduce_while(modules, :pass, fn module, :pass ->
       case apply(module, handler, [message, ctx]) do
         :pass -> {:cont, :pass}

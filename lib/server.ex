@@ -1,7 +1,27 @@
 defmodule TelegramEx.Server do
   @moduledoc """
-  GenServer that long-polls Telegram for updates and dispatches them to the bot module.
-  Started automatically via `child_spec/1` injected by `use TelegramEx`.
+  GenServer that long-polls Telegram for updates and dispatches them to handlers.
+
+  This module implements the core polling loop that fetches updates from Telegram
+  and routes them to the appropriate handlers in your bot module and routers.
+
+  ## Responsibilities
+
+  - **Long polling**: Continuously fetches updates from Telegram API
+  - **Message parsing**: Converts raw Telegram updates into typed structs
+  - **Handler dispatch**: Routes messages and callbacks to appropriate handlers
+  - **FSM integration**: Loads and saves per-user state before/after handlers
+  - **Router chain**: Tries routers in order before falling back to main bot module
+
+  ## Handler Chain
+
+  When an update arrives, handlers are tried in this order:
+
+  1. Each router module (in the order specified)
+  2. The main bot module
+
+  If a handler returns `:pass`, the next handler in the chain is tried.
+  Otherwise, the result is processed and the chain stops.
   """
 
   use GenServer
@@ -10,6 +30,11 @@ defmodule TelegramEx.Server do
 
   @type chat_id :: TelegramEx.Types.chat_id()
 
+  @typedoc """
+  Internal server state.
+
+  Tracks bot configuration, routers, and current update offset for polling.
+  """
   @type state :: %{
           bot_module: module(),
           bot_name: atom(),

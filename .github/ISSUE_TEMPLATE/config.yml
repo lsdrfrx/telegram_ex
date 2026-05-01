@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://hex.pm/packages/telegram_ex
+    about: For documentation and reference.

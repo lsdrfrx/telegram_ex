@@ -9,6 +9,7 @@ Elixir library for building Telegram bots with macro-based API.
 ![Last commit](https://img.shields.io/github/last-commit/lsdrfrx/telegram_ex?style=for-the-badge)
 ![Stars](https://img.shields.io/github/stars/lsdrfrx/telegram_ex?style=for-the-badge)
 ![License](https://img.shields.io/github/license/lsdrfrx/telegram_ex?style=for-the-badge)
+![Hex.pm Downloads](https://img.shields.io/hexpm/dt/telegram_ex?style=for-the-badge)
 
 </div>
 
@@ -25,7 +26,7 @@ Add `telegram_ex` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:telegram_ex, "~> 1.1.0"}
+    {:telegram_ex, "~> 1.2.0"}
   ]
 end
 ```

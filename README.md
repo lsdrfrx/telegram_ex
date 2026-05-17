@@ -1,5 +1,5 @@
 <div align="center">
-  
+
 # TelegramEx
 
 Elixir library for building Telegram bots. Provides a simple interface for handling messages, callbacks, and inline queries with automatic polling.
@@ -307,6 +307,36 @@ defmodule MyBot do
   end
 end
 ```
+
+## Sending Polls
+
+Use `TelegramEx.Builder.Poll` to send polls and quizzes:
+
+```elixir
+defmodule MyBot do
+  use TelegramEx, name: :my_bot
+
+  def handle_message(%{chat: chat}, ctx) do
+    ctx
+    |> Poll.poll("Favorite color?", ["Red", "Blue", "Green"])
+    |> Poll.send(chat["id"])
+  end
+end
+```
+
+### Poll Builder Functions
+
+- `Poll.poll(ctx, question, options)` – Create a regular poll
+- `Poll.quiz(ctx, question, options, correct_option_id)` – Create a quiz (0‑based correct option index)
+- `Poll.anonymous(ctx, boolean)` – Hide voter identities (default: true)
+- `Poll.type(ctx, type)` – Set poll type (`"regular"` or `"quiz"`)
+- `Poll.multiple_answers(ctx, boolean)` – Allow multiple answers (regular poll only)
+- `Poll.explanation(ctx, text)` – Explanation for quiz (shown when answer is wrong)
+- `Poll.explanation(ctx, text, parse_mode)` – Explanation with parse mode (e.g. `"Markdown"`, `"HTML"`)
+- `Poll.open_period(ctx, seconds)` – Time in seconds the poll will be active
+- `Poll.close_date(ctx, timestamp)` – Point in time (Unix timestamp) when poll will be closed
+- `Poll.silent(ctx)` – Send without notification
+- `Poll.send(ctx, chat_id)` – Send the poll
 
 ### Contact Builder Functions
 

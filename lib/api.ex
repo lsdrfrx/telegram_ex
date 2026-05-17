@@ -11,9 +11,20 @@ defmodule TelegramEx.API do
 
   @type updates :: Types.updates()
 
+  defp client do
+    Application.get_env(:telegram_ex, :req_client) ||
+      Req.new()
+      |> ReqProxy.attach()
+      |> tap(&Application.put_env(:telegram_ex, :req_client, &1))
+  end
+
   @spec get_updates(String.t(), integer()) :: {:ok, updates()} | {:error, any()}
   def get_updates(token, offset) do
-    case Req.get("https://api.telegram.org/bot#{token}/getUpdates?offset=#{offset}") do
+    case client()
+         |> Req.get(
+           url: "https://api.telegram.org/bot#{token}/getUpdates",
+           params: [offset: offset]
+         ) do
       {:ok, %{status: 200, body: %{"ok" => true, "result" => updates}}} ->
         {:ok, updates}
 
@@ -36,11 +47,16 @@ defmodule TelegramEx.API do
 
     case ctx[:format] do
       :json ->
-        Req.post("https://api.telegram.org/bot#{token}/#{method}", json: payload)
+        client()
+        |> Req.post(url: "https://api.telegram.org/bot#{token}/#{method}", json: payload)
         |> handle_response()
 
       :multipart ->
-        Req.post("https://api.telegram.org/bot#{token}/#{method}", form_multipart: payload)
+        client()
+        |> Req.post(
+          url: "https://api.telegram.org/bot#{token}/#{method}",
+          form_multipart: payload
+        )
         |> handle_response()
 
       _ ->
@@ -50,7 +66,9 @@ defmodule TelegramEx.API do
 
   @spec answer_callback_query(String.t(), Types.CallbackQuery.t()) :: :ok | {:error, any()}
   def answer_callback_query(token, %{id: id}) do
-    Req.post("https://api.telegram.org/bot#{token}/answerCallbackQuery",
+    client()
+    |> Req.post(
+      url: "https://api.telegram.org/bot#{token}/answerCallbackQuery",
       json: %{callback_query_id: id}
     )
     |> handle_response()

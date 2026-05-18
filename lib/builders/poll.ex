@@ -16,6 +16,7 @@ defmodule TelegramEx.Builder.Poll do
     Map.get(ctx, :payload, %{})
     |> Map.put(:question, question)
     |> Map.put(:options, options)
+    |> Map.put(:type, "regular")
     |> then(&Map.put(ctx, :payload, &1))
   end
 
@@ -31,12 +32,6 @@ defmodule TelegramEx.Builder.Poll do
   def anonymous(ctx, boolean) do
     Map.get(ctx, :payload, %{})
     |> Map.put(:is_anonymous, boolean)
-    |> then(&Map.put(ctx, :payload, &1))
-  end
-
-  def type(ctx, type) when type in ["regular", "quiz"] do
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:type, type)
     |> then(&Map.put(ctx, :payload, &1))
   end
 

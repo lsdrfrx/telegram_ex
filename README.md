@@ -339,7 +339,6 @@ end
 - `Poll.poll(ctx, question, options)` – Create a regular poll
 - `Poll.quiz(ctx, question, options, correct_option_id)` – Create a quiz (0‑based correct option index)
 - `Poll.anonymous(ctx, boolean)` – Hide voter identities (default: true)
-- `Poll.type(ctx, type)` – Set poll type (`"regular"` or `"quiz"`)
 - `Poll.multiple_answers(ctx, boolean)` – Allow multiple answers (regular poll only)
 - `Poll.explanation(ctx, text)` – Explanation for quiz (shown when answer is wrong)
 - `Poll.explanation(ctx, text, parse_mode)` – Explanation with parse mode (e.g. `"Markdown"`, `"HTML"`)

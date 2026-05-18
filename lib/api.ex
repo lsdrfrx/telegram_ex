@@ -41,6 +41,13 @@ defmodule TelegramEx.API do
           optional(:message_thread_id) => integer()
         }
 
+  defp client do
+    Application.get_env(:telegram_ex, :req_client) ||
+      Req.new()
+      |> ReqProxy.attach()
+      |> tap(&Application.put_env(:telegram_ex, :req_client, &1))
+  end
+
   @doc """
   Fetches updates from Telegram using long polling.
 

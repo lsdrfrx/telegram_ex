@@ -11,7 +11,8 @@ defmodule Example.Bot do
       ["/html", "/keyboard", "/reply_kb"],
       ["/photo", "/document", "/sticker"],
       ["/video", "/location", "/contact"],
-      ["/silent", "/admin", "/survey"]
+      ["/silent", "/admin", "/survey"],
+      ["/poll", "/quiz"]
     ]
 
     ctx
@@ -257,5 +258,37 @@ defmodule Example.Bot do
     ctx
     |> Message.text("You selected: *Option #{letter}*", "Markdown")
     |> Message.send(chat["id"])
+  end
+
+  # ── /poll ──────────────────────────────────────────────────────────
+  # Regular poll with multiple answers
+  def handle_message(%{text: "/poll", chat: chat}, ctx) do
+    ctx
+    |> Poll.poll("What Elixir features do you love?", [
+      "Pattern matching",
+      "Pipe operator",
+      "GenServer",
+      "Protocols"
+    ])
+    |> Poll.multiple_answers(true)
+    |> Poll.anonymous(true)
+    |> Poll.open_period(120)
+    |> Poll.send(chat["id"])
+  end
+
+  # ── /quiz ──────────────────────────────────────────────────────────
+  # Quiz with explanation
+  def handle_message(%{text: "/quiz", chat: chat}, ctx) do
+    ctx
+    |> Poll.quiz(
+      "What is the capital of France?",
+      ["Berlin", "Madrid", "Paris", "Lisbon"],
+      2
+    )
+    |> Poll.explanation(
+      "Correct! *Paris* is the capital of France.\nThe Eiffel Tower is located there.",
+      "Markdown"
+    )
+    |> Poll.send(chat["id"])
   end
 end

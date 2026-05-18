@@ -1,5 +1,3 @@
-<div align="center">
-  
 # TelegramEx
 
 Elixir library for building Telegram bots with macro-based API.
@@ -10,8 +8,6 @@ Elixir library for building Telegram bots with macro-based API.
 ![Stars](https://img.shields.io/github/stars/lsdrfrx/telegram_ex?style=for-the-badge)
 ![License](https://img.shields.io/github/license/lsdrfrx/telegram_ex?style=for-the-badge)
 ![Hex.pm Downloads](https://img.shields.io/hexpm/dt/telegram_ex?style=for-the-badge)
-
-</div>
 
 ## Why This Library Exists
 

@@ -27,6 +27,7 @@ defmodule TelegramEx.Builder.Document do
   """
 
   alias TelegramEx.API
+  alias TelegramEx.MimeType
 
   @doc """
   Sets the document from a URL.
@@ -65,7 +66,7 @@ defmodule TelegramEx.Builder.Document do
     content = File.read!(path)
 
     Map.get(ctx, :payload, %{})
-    |> Map.put(:document, {content, filename: filename, content_type: "application/octet-stream"})
+    |> Map.put(:document, {content, filename: filename, content_type: MimeType.from_path(path)})
     |> then(&Map.put(ctx, :payload, &1))
   end
 

@@ -26,6 +26,7 @@ defmodule TelegramEx.Builder.Video do
   """
 
   alias TelegramEx.API
+  alias TelegramEx.MimeType
 
   @doc """
   Sets the video by Telegram file ID.
@@ -83,7 +84,7 @@ defmodule TelegramEx.Builder.Video do
     content = File.read!(path)
 
     Map.get(ctx, :payload, %{})
-    |> Map.put(:video, {content, filename: filename, content_type: "video/mp4"})
+    |> Map.put(:video, {content, filename: filename, content_type: MimeType.from_path(path)})
     |> then(&Map.put(ctx, :payload, &1))
   end
 
@@ -124,7 +125,7 @@ defmodule TelegramEx.Builder.Video do
     content = File.read!(path)
 
     Map.get(ctx, :payload, %{})
-    |> Map.put(:cover, {content, filename: filename, content_type: "image/jpeg"})
+    |> Map.put(:cover, {content, filename: filename, content_type: MimeType.from_path(path)})
     |> then(&Map.put(ctx, :payload, &1))
   end
 

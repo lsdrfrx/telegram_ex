@@ -158,11 +158,13 @@ defmodule TelegramEx.Server do
   defp handle_result({:stay, data}, bot_name, chat_id, state),
     do: FSM.set_state(bot_name, chat_id, state, data)
 
-  defp handle_result(:ok, _bot_name, _chat_id, _state), do: :ok
-  defp handle_result(:pass, _bot_name, _chat_id, _state), do: :ok
+  defp handle_result({:ok, _ctx}, _bot_name, _chat_id, _state), do: :ok
 
   defp handle_result({:error, reason}, _bot_name, _chat_id, _state),
     do: Logger.error("Handler error: #{inspect(reason)}")
+
+  defp handle_result(:ok, _bot_name, _chat_id, _state), do: :ok
+  defp handle_result(:pass, _bot_name, _chat_id, _state), do: :ok
 
   defp handle_result(error, _bot_name, _chat_id, _state),
     do: Logger.error("Unknown handler response: #{inspect(error)}")

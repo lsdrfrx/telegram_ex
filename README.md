@@ -143,22 +143,35 @@ end
 ### Sending Media
 
 ```elixir
-# Photo
-ctx
-|> Photo.path("/path/to/image.jpg")
-|> Photo.caption("Check this out!")
-|> Photo.send(chat_id)
+# Photo with error handling
+case Photo.path(ctx, "/path/to/image.jpg") do
+  {:ok, ctx} ->
+    ctx
+    |> Photo.caption("Check this out!")
+    |> Photo.send(chat_id)
 
-# Document
-ctx
-|> Document.url("https://example.com/file.pdf")
-|> Document.send(chat_id)
+  {:error, :enoent} ->
+    ctx
+    |> Message.text("Photo not found")
+    |> Message.send(chat_id)
 
-# Video
-ctx
-|> Video.path("/path/to/video.mp4")
-|> Video.duration(120)
-|> Video.send(chat_id)
+  {:error, _} ->
+    ctx
+    |> Message.text("Failed to load photo")
+    |> Message.send(chat_id)
+end
+
+# Document with error handling
+case Document.path(ctx, "/path/to/file.pdf") do
+  {:ok, ctx} -> ctx |> Document.send(chat_id)
+  {:error, _} -> Message.text(ctx, "Failed to load document") |> Message.send(chat_id)
+end
+
+# Video with error handling
+case Video.path(ctx, "/path/to/video.mp4") do
+  {:ok, ctx} -> ctx |> Video.duration(120) |> Video.send(chat_id)
+  {:error, _} -> Message.text(ctx, "Failed to load video") |> Message.send(chat_id)
+end
 ```
 
 ### Routers for Code Organization
@@ -185,6 +198,18 @@ defmodule MyBot do
   # ...
 end
 ```
+
+## Error Handling
+
+File operations (`path/2`, `cover_path/2`) return `{:ok, ctx}` on success
+or `{:error, reason}` on error. Always handle both cases:
+
+```elixir
+case Photo.path(ctx, "missing.jpg") do
+  {:ok, ctx} -> ctx |> Photo.send(chat_id)
+  {:error, :enoent} -> Message.text(ctx, "File not found") |> Message.send(chat_id)
+  {:error, :eacces} -> Message.text(ctx, "Permission denied") |> Message.send(chat_id)
+end
 
 ## Documentation
 

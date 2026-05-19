@@ -64,22 +64,35 @@ defmodule TelegramEx.Builder.Photo do
 
   ## Returns
 
-  Updated context map with photo file content set.
+  - `{:ok, updated_ctx}` - Photo loaded successfully
+  - `{:error, reason}` - Failed to read file (e.g., `:enoent`, `:eacces`)
 
   ## Examples
 
-      ctx
-      |> Photo.path("/tmp/photo.jpg")
-      |> Photo.send(chat_id)
+      case Photo.path(ctx, "/tmp/photo.jpg") do
+        {:ok, ctx} -> ctx |> Photo.send(chat_id)
+        {:error, :enoent} -> Message.text(ctx, "File not found") |> Message.send(chat_id)
+        {:error, _} -> Message.text(ctx, "Failed to load photo") |> Message.send(chat_id)
+      end
   """
-  @spec path(map(), String.t()) :: map()
+  @spec path(map(), String.t()) :: {:ok, map()} | {:error, atom()}
   def path(ctx, path) do
-    filename = Path.basename(path)
-    content = File.read!(path)
+    case File.read(path) do
+      {:ok, content} ->
+        filename = Path.basename(path)
 
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:photo, {content, filename: filename, content_type: MimeType.from_path(path)})
-    |> then(&Map.put(ctx, :payload, &1))
+        updated_payload =
+          Map.get(ctx, :payload, %{})
+          |> Map.put(
+            :photo,
+            {content, filename: filename, content_type: MimeType.from_path(path)}
+          )
+
+        {:ok, Map.put(ctx, :payload, updated_payload)}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
   end
 
   @doc """

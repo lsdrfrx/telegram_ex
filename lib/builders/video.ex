@@ -76,16 +76,34 @@ defmodule TelegramEx.Builder.Video do
 
   ## Returns
 
-  Updated context map with video file content set.
-  """
-  @spec path(map(), String.t()) :: map()
-  def path(ctx, path) do
-    filename = Path.basename(path)
-    content = File.read!(path)
+  - `{:ok, updated_ctx}` - Video loaded successfully
+  - `{:error, reason}` - Failed to read file
 
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:video, {content, filename: filename, content_type: MimeType.from_path(path)})
-    |> then(&Map.put(ctx, :payload, &1))
+  ## Examples
+
+      case Video.path(ctx, "/tmp/video.mp4") do
+        {:ok, ctx} -> ctx |> Video.send(chat_id)
+        {:error, _} -> Message.text(ctx, "Failed to load video") |> Message.send(chat_id)
+      end
+  """
+  @spec path(map(), String.t()) :: {:ok, map()} | {:error, atom()}
+  def path(ctx, path) do
+    case File.read(path) do
+      {:ok, content} ->
+        filename = Path.basename(path)
+
+        updated_payload =
+          Map.get(ctx, :payload, %{})
+          |> Map.put(
+            :video,
+            {content, filename: filename, content_type: MimeType.from_path(path)}
+          )
+
+        {:ok, Map.put(ctx, :payload, updated_payload)}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
   end
 
   @doc """
@@ -117,16 +135,34 @@ defmodule TelegramEx.Builder.Video do
 
   ## Returns
 
-  Updated context map with cover image content set.
-  """
-  @spec cover_path(map(), String.t()) :: map()
-  def cover_path(ctx, path) do
-    filename = Path.basename(path)
-    content = File.read!(path)
+  - `{:ok, updated_ctx}` - Cover image loaded successfully
+  - `{:error, reason}` - Failed to read file
 
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:cover, {content, filename: filename, content_type: MimeType.from_path(path)})
-    |> then(&Map.put(ctx, :payload, &1))
+  ## Examples
+
+      case Video.cover_path(ctx, "/tmp/cover.jpg") do
+        {:ok, ctx} -> ctx |> Video.send(chat_id)
+        {:error, _} -> Message.text(ctx, "Failed to load cover") |> Message.send(chat_id)
+      end
+  """
+  @spec cover_path(map(), String.t()) :: {:ok, map()} | {:error, atom()}
+  def cover_path(ctx, path) do
+    case File.read(path) do
+      {:ok, content} ->
+        filename = Path.basename(path)
+
+        updated_payload =
+          Map.get(ctx, :payload, %{})
+          |> Map.put(
+            :cover,
+            {content, filename: filename, content_type: MimeType.from_path(path)}
+          )
+
+        {:ok, Map.put(ctx, :payload, updated_payload)}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
   end
 
   @doc """

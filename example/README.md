@@ -31,3 +31,5 @@ A demo bot that showcases every feature of the [TelegramEx](https://github.com/l
 ```bash
 TOKEN=your_bot_token mix run --no-halt
 ```
+
+You can use proxy through the environment variables HTTP_PROXY, HTTPS_PROXY, ALL_PROXY.

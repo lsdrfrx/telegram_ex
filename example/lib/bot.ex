@@ -71,12 +71,9 @@ defmodule Example.Bot do
   # ── /markdown ──────────────────────────────────────────────────────
   def handle_message(%{text: "/markdown", chat: chat}, ctx) do
     md = """
-    *Bold text*
-    _Italic text_
-    `Inline code`
-    ```
-    Code block
-    ```
+        *Bold text*
+        _Italic text_
+        `Inline code`
     [TelegramEx on GitHub](https://github.com/lsdrfrx/telegram_ex)
     """
 
@@ -151,28 +148,69 @@ defmodule Example.Bot do
   end
 
   # ── /document ──────────────────────────────────────────────────────
-  # Document from local file
+  # Document from local file with error handling
   def handle_message(%{text: "/document", chat: chat}, ctx) do
-    ctx
-    |> Document.path("mix.exs")
-    |> Document.caption("This bot's `mix.exs` sent as a document", "Markdown")
-    |> Document.send(chat["id"])
+    case Document.path(ctx, "mix.exs") do
+      {:ok, ctx} ->
+        ctx
+        |> Document.caption("This bot's `mix.exs` sent as a document", "Markdown")
+        |> Document.send(chat["id"])
+
+      {:error, reason} ->
+        error_text =
+          case reason do
+            :enoent -> "File not found: mix.exs"
+            :eacces -> "Permission denied"
+            _ -> "Failed to load document"
+          end
+
+        ctx
+        |> Message.text(error_text)
+        |> Message.send(chat["id"])
+    end
   end
 
   # ── /sticker ───────────────────────────────────────────────────────
-  # Sticker from local file
+  # Sticker from local file with error handling
   def handle_message(%{text: "/sticker", chat: chat}, ctx) do
-    ctx
-    |> Sticker.path("assets/sticker.webp")
-    |> Sticker.send(chat["id"])
+    case Sticker.path(ctx, "assets/sticker.webp") do
+      {:ok, ctx} ->
+        ctx
+        |> Sticker.send(chat["id"])
+
+      {:error, reason} ->
+        error_text =
+          case reason do
+            :enoent -> "Sticker not found. Place a sticker.webp in assets/"
+            :eacces -> "Permission denied"
+            _ -> "Failed to load sticker"
+          end
+
+        ctx
+        |> Message.text(error_text)
+        |> Message.send(chat["id"])
+    end
   end
 
   # ── /video ─────────────────────────────────────────────────────────
-  # Video from local file
   def handle_message(%{text: "/video", chat: chat}, ctx) do
-    ctx
-    |> Video.path("assets/video.mp4")
-    |> Video.send(chat["id"])
+    case Video.path(ctx, "assets/video.mp4") do
+      {:ok, ctx} ->
+        ctx
+        |> Video.send(chat["id"])
+
+      {:error, reason} ->
+        error_text =
+          case reason do
+            :enoent -> "Video not found. Place a video.mp4 in assets/"
+            :eacces -> "Permission denied"
+            _ -> "Failed to load video"
+          end
+
+        ctx
+        |> Message.text(error_text)
+        |> Message.send(chat["id"])
+    end
   end
 
   # ── /location ──────────────────────────────────────────────────────
@@ -220,46 +258,6 @@ defmodule Example.Bot do
     {:transition, :survey_name, %{}}
   end
 
-  # ── Callback queries ───────────────────────────────────────────────
-
-  def handle_callback(%{data: "vote_like", message: %{chat: chat}} = cb, ctx) do
-    ctx
-    |> Message.text("👍 You liked it!")
-    |> Message.answer_callback_query(cb)
-    |> Message.send(chat["id"])
-  end
-
-  def handle_callback(%{data: "vote_dislike", message: %{chat: chat}} = cb, ctx) do
-    ctx
-    |> Message.text("👎 You disliked it!")
-    |> Message.answer_callback_query(cb)
-    |> Message.send(chat["id"])
-  end
-
-  def handle_callback(%{data: "info", message: %{chat: chat}} = cb, ctx) do
-    ctx
-    |> Message.text(
-      "ℹ️ This bot demonstrates all TelegramEx features:\nBuilders, keyboards, FSM, routers, callbacks."
-    )
-    |> Message.answer_callback_query(cb)
-    |> Message.send(chat["id"])
-  end
-
-  def handle_callback(%{data: "cancel", message: %{chat: chat}} = cb, ctx) do
-    ctx
-    |> Message.text("❌ Action cancelled.")
-    |> Message.answer_callback_query(cb)
-    |> Message.send(chat["id"])
-  end
-
-  # ── Reply keyboard echo ───────────────────────────────────────────
-  def handle_message(%{text: "Option " <> letter, chat: chat}, ctx)
-      when letter in ["A", "B", "C"] do
-    ctx
-    |> Message.text("You selected: *Option #{letter}*", "Markdown")
-    |> Message.send(chat["id"])
-  end
-
   # ── /poll ──────────────────────────────────────────────────────────
   # Regular poll with multiple answers
   def handle_message(%{text: "/poll", chat: chat}, ctx) do
@@ -290,5 +288,45 @@ defmodule Example.Bot do
       "Markdown"
     )
     |> Poll.send(chat["id"])
+  end
+
+  # ── Reply keyboard echo ───────────────────────────────────────────
+  def handle_message(%{text: "Option " <> letter, chat: chat}, ctx)
+      when letter in ["A", "B", "C"] do
+    ctx
+    |> Message.text("You selected: *Option #{letter}*", "Markdown")
+    |> Message.send(chat["id"])
+  end
+
+  # ── Callback queries ───────────────────────────────────────────────
+
+  def handle_callback(%{data: "vote_like", message: %{chat: chat}} = cb, ctx) do
+    ctx
+    |> Message.text("👍 You liked it!")
+    |> Message.answer_callback_query(cb)
+    |> Message.send(chat["id"])
+  end
+
+  def handle_callback(%{data: "vote_dislike", message: %{chat: chat}} = cb, ctx) do
+    ctx
+    |> Message.text("👎 You disliked it!")
+    |> Message.answer_callback_query(cb)
+    |> Message.send(chat["id"])
+  end
+
+  def handle_callback(%{data: "info", message: %{chat: chat}} = cb, ctx) do
+    ctx
+    |> Message.text(
+      "ℹ️ This bot demonstrates all TelegramEx features:\nBuilders, keyboards, FSM, routers, callbacks."
+    )
+    |> Message.answer_callback_query(cb)
+    |> Message.send(chat["id"])
+  end
+
+  def handle_callback(%{data: "cancel", message: %{chat: chat}} = cb, ctx) do
+    ctx
+    |> Message.text("❌ Action cancelled.")
+    |> Message.answer_callback_query(cb)
+    |> Message.send(chat["id"])
   end
 end

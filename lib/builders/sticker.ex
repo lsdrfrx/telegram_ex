@@ -74,16 +74,34 @@ defmodule TelegramEx.Builder.Sticker do
 
   ## Returns
 
-  Updated context map with sticker file content set.
-  """
-  @spec path(map(), String.t()) :: map()
-  def path(ctx, path) do
-    filename = Path.basename(path)
-    content = File.read!(path)
+  - `{:ok, updated_ctx}` - Sticker loaded successfully
+  - `{:error, reason}` - Failed to read file
 
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:sticker, {content, filename: filename, content_type: MimeType.from_path(path)})
-    |> then(&Map.put(ctx, :payload, &1))
+  ## Examples
+
+      case Sticker.path(ctx, "/tmp/sticker.webp") do
+        {:ok, ctx} -> ctx |> Sticker.send(chat_id)
+        {:error, _} -> Message.text(ctx, "Failed to load sticker") |> Message.send(chat_id)
+      end
+  """
+  @spec path(map(), String.t()) :: {:ok, map()} | {:error, atom()}
+  def path(ctx, path) do
+    case File.read(path) do
+      {:ok, content} ->
+        filename = Path.basename(path)
+
+        updated_payload =
+          Map.get(ctx, :payload, %{})
+          |> Map.put(
+            :sticker,
+            {content, filename: filename, content_type: MimeType.from_path(path)}
+          )
+
+        {:ok, Map.put(ctx, :payload, updated_payload)}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
   end
 
   @doc """

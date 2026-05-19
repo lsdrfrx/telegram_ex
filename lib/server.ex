@@ -90,7 +90,7 @@ defmodule TelegramEx.Server do
         poll_updates(%{state | offset: new_offset})
 
       {:error, reason} ->
-        Logger.error("Error while getting update: #{reason}")
+        Logger.error("Error while getting update: #{inspect(reason)}")
         poll_updates(state)
     end
   end

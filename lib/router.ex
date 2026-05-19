@@ -75,7 +75,7 @@ defmodule TelegramEx.Router do
       import TelegramEx
       import TelegramEx.FSM, only: [defstate: 2]
       alias TelegramEx.{API, Config, FSM}
-      alias TelegramEx.Builder.{Contact, Document, Location, Message, Photo, Sticker, Video}
+      alias TelegramEx.Builder.{Contact, Document, Location, Message, Photo, Poll, Sticker, Video}
 
       @before_compile TelegramEx.Router
     end

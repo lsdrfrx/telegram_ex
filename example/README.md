@@ -23,6 +23,8 @@ A demo bot that showcases every feature of the [TelegramEx](https://github.com/l
 | `/silent`    | Silent message (no notification)      |
 | `/admin`     | Router + FSM: admin mode              |
 | `/survey`    | Multi-step FSM with data accumulation |
+| `/poll`      | Regular poll with multiple answers    |
+| `/quiz`      | Quiz with explanation                 |
 
 ## Running
 

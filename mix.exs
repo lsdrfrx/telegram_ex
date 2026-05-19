@@ -5,7 +5,7 @@ defmodule TelegramEx.MixProject do
     [
       app: :telegram_ex,
       name: "TelegramEx",
-      version: "1.2.0",
+      version: "1.2.1",
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       build_embedded: Mix.env() == :prod,
@@ -38,7 +38,7 @@ defmodule TelegramEx.MixProject do
     [
       plt_local_path: "priv/plts/project.plt",
       plt_core_path: "priv/plts/core.plt",
-      flags: [:error_handling, :missing_return, :extra_return, :underspecs]
+      flags: [:error_handling, :missing_return, :extra_return]
     ]
   end
 

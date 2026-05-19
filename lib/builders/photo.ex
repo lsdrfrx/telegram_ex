@@ -27,6 +27,7 @@ defmodule TelegramEx.Builder.Photo do
   """
 
   alias TelegramEx.API
+  alias TelegramEx.MimeType
 
   @doc """
   Sets the photo from a URL.
@@ -77,7 +78,7 @@ defmodule TelegramEx.Builder.Photo do
     content = File.read!(path)
 
     Map.get(ctx, :payload, %{})
-    |> Map.put(:photo, {content, filename: filename, content_type: "image/jpeg"})
+    |> Map.put(:photo, {content, filename: filename, content_type: MimeType.from_path(path)})
     |> then(&Map.put(ctx, :payload, &1))
   end
 

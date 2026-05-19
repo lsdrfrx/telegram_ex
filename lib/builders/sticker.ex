@@ -24,6 +24,7 @@ defmodule TelegramEx.Builder.Sticker do
   """
 
   alias TelegramEx.API
+  alias TelegramEx.MimeType
 
   @doc """
   Sets the sticker by Telegram file ID.
@@ -81,7 +82,7 @@ defmodule TelegramEx.Builder.Sticker do
     content = File.read!(path)
 
     Map.get(ctx, :payload, %{})
-    |> Map.put(:sticker, {content, filename: filename, content_type: "image/webp"})
+    |> Map.put(:sticker, {content, filename: filename, content_type: MimeType.from_path(path)})
     |> then(&Map.put(ctx, :payload, &1))
   end
 

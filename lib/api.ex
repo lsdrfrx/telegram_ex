@@ -205,6 +205,15 @@ defmodule TelegramEx.API do
     |> handle_response()
   end
 
+  def set_my_commands(commands, token) when is_list(commands) do
+    client()
+    |> Req.post(
+      url: "https://api.telegram.org/bot#{token}/setMyCommands",
+      json: %{commands: commands}
+    )
+    |> handle_response()
+  end
+
   defp handle_response({:ok, %{status: 200}}) do
     :ok
   end

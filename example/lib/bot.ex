@@ -5,7 +5,7 @@ defmodule Example.Bot do
 
   # ── /start ─────────────────────────────────────────────────────────
   # Reply keyboard with all available commands
-  def handle_message(%{text: "/start", chat: chat}, ctx) do
+  defcommand "start", description: "Show welcome message and keyboard", bind: [:ctx, :message] do
     keyboard = [
       ["/help", "/text", "/markdown"],
       ["/html", "/keyboard", "/reply_kb"],
@@ -21,12 +21,12 @@ defmodule Example.Bot do
       "Markdown"
     )
     |> Message.reply_keyboard(keyboard, resize_keyboard: true)
-    |> Message.send(chat["id"])
+    |> Message.send(message.chat["id"])
   end
 
   # ── /help ──────────────────────────────────────────────────────────
   # HTML parse mode example
-  def handle_message(%{text: "/help", chat: chat}, ctx) do
+  defcommand "help", description: "Show available commands", bind: [:ctx, :message] do
     help = """
     <b>Available Commands</b>
 
@@ -58,7 +58,7 @@ defmodule Example.Bot do
 
     ctx
     |> Message.text(help, "HTML")
-    |> Message.send(chat["id"])
+    |> Message.send(message.chat["id"])
   end
 
   # ── /text ──────────────────────────────────────────────────────────

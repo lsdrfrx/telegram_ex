@@ -74,15 +74,24 @@ defmodule TelegramEx.Router do
 
       import TelegramEx
       import TelegramEx.FSM, only: [defstate: 2]
+      import TelegramEx.Command, only: [defcommand: 3]
       alias TelegramEx.{API, Config, FSM}
       alias TelegramEx.Builder.{Contact, Document, Location, Message, Photo, Poll, Sticker, Video}
+
+      Module.register_attribute(__MODULE__, :commands, accumulate: true)
 
       @before_compile TelegramEx.Router
     end
   end
 
-  defmacro __before_compile__(_env) do
+  defmacro __before_compile__(env) do
+    commands =
+      env.module
+      |> Module.get_attribute(:commands)
+      |> Enum.reverse()
+
     quote do
+      def __commands__, do: unquote(Macro.escape(commands))
       def handle_message(_message, _ctx), do: :pass
       def handle_callback(_callback, _ctx), do: :pass
     end

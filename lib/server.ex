@@ -26,7 +26,7 @@ defmodule TelegramEx.Server do
 
   use GenServer
   require Logger
-  alias TelegramEx.{API, Config, FSM, Types}
+  alias TelegramEx.{API, Command, Config, FSM, Types}
 
   @type chat_id :: TelegramEx.Types.chat_id()
 
@@ -49,13 +49,17 @@ defmodule TelegramEx.Server do
 
   @impl true
   def init({bot_module, bot_name, routers}) do
+    token = Config.token(bot_name)
+
+    Command.register_all(token, bot_module)
+
     case FSM.init(bot_name) do
       :ok ->
         state = %{
           bot_module: bot_module,
           bot_name: bot_name,
           routers: routers,
-          token: Config.token(bot_name),
+          token: token,
           offset: 0
         }
 

@@ -193,6 +193,7 @@ defmodule TelegramEx do
 
     quote do
       def __commands__, do: unquote(Macro.escape(commands))
+      def __routers__, do: @routers
       def handle_message(_message, _ctx), do: :ok
       def handle_callback(_callback, _ctx), do: :ok
     end

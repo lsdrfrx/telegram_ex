@@ -1,23 +1,35 @@
 defmodule TelegramEx.Command do
   @moduledoc """
-  Struct representing a Telegram command.
+  Helpers for defining and registering Telegram bot commands.
 
-  This struct contains information about a command received from a user,
-  including the command name, arguments, and the original message.
+  `defcommand/3` defines a regular `handle_message/2` clause for messages that
+  start with a Telegram command and stores the command metadata so it can be
+  registered with Telegram through `setMyCommands`.
+
+  Commands are matched without the leading slash:
+
+      defcommand "start", description: "Show welcome message", bind: [:ctx, :message] do
+        ctx
+        |> Message.text("Welcome!")
+        |> Message.send(message.chat["id"])
+      end
+
+  The `:bind` option controls which variables are exposed to the command body:
+
+  - `:ctx` - handler context
+  - `:message` - original Telegram message
+  - `:args` - command arguments split by spaces
+  - `:command` - `%TelegramEx.Command{}` struct for the matched command
+
+  `register_all/2` is called by `TelegramEx.Server` on startup. It reads command
+  metadata from the bot module and its routers, then sends the list to Telegram
+  using `setMyCommands`.
 
   ## Fields
 
   - `:command` - The command name (string)
-  - `:args` - List of arguments passed with the command (list of strings)
+  - `:description` - Command description used by Telegram clients
   - `:message` - The original message struct (TelegramEx.Types.Message.t())
-
-  ## Examples
-
-      def handle_command(%Command{command: "start", args: args, message: msg}, ctx) do
-        # Handle the /start command
-        ctx
-        |> Command.reply("Welcome! You sent: \#{Enum.join(args, " ")}", msg.chat["id"])
-      end
   """
 
   alias TelegramEx.API
@@ -39,10 +51,32 @@ defmodule TelegramEx.Command do
     :message
   ]
 
+  @doc """
+  Registers all commands defined in a bot module and its routers.
+  """
+  @spec register_all(String.t(), module()) :: :ok | {:error, term()}
   def register_all(token, module) do
-    module.__commands__() |> API.set_my_commands(token)
+    commands =
+      module
+      |> command_modules()
+      |> Enum.flat_map(&module_commands/1)
+      |> Enum.uniq_by(& &1.command)
+
+    API.set_my_commands(commands, token)
   end
 
+  @doc """
+  Defines a command handler and adds the command to the module metadata.
+
+  The command name should be passed without the leading slash. `:description`
+  is required because Telegram requires it for `setMyCommands`.
+
+      defcommand "echo", description: "Echo command arguments", bind: [:ctx, :message, :args] do
+        ctx
+        |> Message.text(Enum.join(args, " "))
+        |> Message.send(message.chat["id"])
+      end
+  """
   defmacro defcommand(command_name, opts, do: block) do
     bind = Keyword.get(opts, :bind, [])
 
@@ -50,7 +84,7 @@ defmodule TelegramEx.Command do
     ctx_var = Macro.var(:ctx, nil)
     args_var = Macro.var(:args, nil)
     command_var = Macro.var(:command, nil)
-    description = Keyword.get(opts, :description, nil)
+    description = Keyword.fetch!(opts, :description)
 
     args_assignment =
       if :args in bind do
@@ -102,5 +136,20 @@ defmodule TelegramEx.Command do
         unquote(block)
       end
     end
+  end
+
+  defp command_modules(module) do
+    routers =
+      if function_exported?(module, :__routers__, 0),
+        do: module.__routers__(),
+        else: []
+
+    [module | routers]
+  end
+
+  defp module_commands(module) do
+    if function_exported?(module, :__commands__, 0),
+      do: module.__commands__(),
+      else: []
   end
 end

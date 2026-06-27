@@ -1,18 +1,19 @@
 defmodule Example.Bot do
   use TelegramEx,
     name: :example_bot,
-    routers: [Example.Routers.Admin, Example.Routers.Survey]
+    routers: [Example.Routers.Commands, Example.Routers.Admin, Example.Routers.Survey]
 
   # ── /start ─────────────────────────────────────────────────────────
   # Reply keyboard with all available commands
-  defcommand "start", description: "Show welcome message and keyboard", bind: [:ctx, :message] do
+  def handle_message(%{text: "/start", chat: chat}, ctx) do
     keyboard = [
       ["/help", "/text", "/markdown"],
       ["/html", "/keyboard", "/reply_kb"],
       ["/photo", "/document", "/sticker"],
       ["/video", "/location", "/contact"],
       ["/silent", "/admin", "/survey"],
-      ["/poll", "/quiz"]
+      ["/poll", "/quiz"],
+      ["/command_demo", "/echo hello"]
     ]
 
     ctx
@@ -21,12 +22,12 @@ defmodule Example.Bot do
       "Markdown"
     )
     |> Message.reply_keyboard(keyboard, resize_keyboard: true)
-    |> Message.send(message.chat["id"])
+    |> Message.send(chat["id"])
   end
 
   # ── /help ──────────────────────────────────────────────────────────
   # HTML parse mode example
-  defcommand "help", description: "Show available commands", bind: [:ctx, :message] do
+  def handle_message(%{text: "/help", chat: chat}, ctx) do
     help = """
     <b>Available Commands</b>
 
@@ -54,11 +55,22 @@ defmodule Example.Bot do
     <b>FSM & Routers</b>
     /admin — enter admin mode (Router + FSM)
     /survey — start a multi-step survey (FSM with data)
+
+    <b>Command DSL</b>
+    /command_demo — defcommand example in a router
+    /echo text — defcommand example with arguments
     """
 
     ctx
     |> Message.text(help, "HTML")
-    |> Message.send(message.chat["id"])
+    |> Message.send(chat["id"])
+  end
+
+  def handle_message(%{text: "/clear", chat: chat}, ctx) do
+    ctx
+    |> Message.text("Reply keyboard cleared.")
+    |> Message.remove_keyboard()
+    |> Message.send(chat["id"])
   end
 
   # ── /text ──────────────────────────────────────────────────────────

@@ -89,9 +89,9 @@ defmodule TelegramEx.API do
       {:ok, %{status: 200, body: %{"ok" => true, "result" => updates}}} ->
         {:ok, updates}
 
-      {:ok, %{body: %{"description" => reason}}} ->
+      {:ok, %{body: %{"description" => reason} = body}} ->
         Logger.error(reason)
-        {:error, :bad_request}
+        {:error, TelegramEx.Error.from_body(body)}
 
       {:error, reason} ->
         {:error, reason}
@@ -218,9 +218,9 @@ defmodule TelegramEx.API do
     :ok
   end
 
-  defp handle_response({:ok, %{body: %{"description" => reason}}}) do
+  defp handle_response({:ok, %{body: %{"description" => reason} = body}}) do
     Logger.error(reason)
-    {:error, :bad_request}
+    {:error, TelegramEx.Error.from_body(body)}
   end
 
   defp handle_response({:ok, response}) do

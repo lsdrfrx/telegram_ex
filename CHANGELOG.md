@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `defcommand` macro for defining commands with arguments and options
+- `TelegramEx.Error` struct to describe API errors
 
 ## 1.2.1 - 18-05-2026
 

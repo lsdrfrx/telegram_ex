@@ -2,28 +2,8 @@ defmodule TelegramEx.Builder.Document do
   @moduledoc """
   Builder for document payloads.
 
-  This module provides a fluent API for sending documents (files) from URLs,
-  file paths, or Telegram file IDs. Documents can include captions and parse modes.
-
-  ## Examples
-
-      # Send document from URL
-      ctx
-      |> Document.url("https://example.com/report.pdf")
-      |> Document.caption("Monthly Report")
-      |> Document.send(chat_id)
-
-      # Send document from local file
-      ctx
-      |> Document.path("/path/to/file.pdf")
-      |> Document.caption("Important document", "Markdown")
-      |> Document.send(chat_id)
-
-      # Send document silently
-      ctx
-      |> Document.path("/path/to/file.pdf")
-      |> Document.silent()
-      |> Document.send(chat_id)
+  Supports URLs, local file paths, captions, parse modes, and silent sends. See
+  [Messages and Media](messages-and-media.md).
   """
 
   alias TelegramEx.API

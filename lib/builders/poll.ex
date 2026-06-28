@@ -2,12 +2,8 @@ defmodule TelegramEx.Builder.Poll do
   @moduledoc """
   Builder for poll and quiz payloads.
 
-      Poll.poll(ctx, "Favorite color?", ["Red", "Blue", "Green"])
-      |> Poll.send(chat_id)
-
-      Poll.quiz(ctx, "What is 2+2?", ["3", "4", "5"], 1)
-      |> Poll.explanation("Correct answer is 4")
-      |> Poll.send(chat_id)
+  Builds `sendPoll` payloads for regular polls and quizzes. See
+  [Messages and Media](messages-and-media.md).
   """
 
   alias TelegramEx.API

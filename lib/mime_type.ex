@@ -52,16 +52,6 @@ defmodule TelegramEx.MimeType do
 
   A MIME content type string.
 
-  ## Examples
-
-      iex> TelegramEx.MimeType.from_path("photo.PNG")
-      "image/png"
-
-      iex> TelegramEx.MimeType.from_path("clip.webm")
-      "video/webm"
-
-      iex> TelegramEx.MimeType.from_path("archive.unknown")
-      "application/octet-stream"
   """
   @spec from_path(String.t()) :: String.t()
   def from_path(path) do

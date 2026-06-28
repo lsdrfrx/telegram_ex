@@ -2,25 +2,8 @@ defmodule TelegramEx.Builder.Sticker do
   @moduledoc """
   Builder for sticker payloads.
 
-  This module provides a fluent API for sending stickers from Telegram file IDs,
-  URLs, or local file paths.
-
-  ## Examples
-
-      # Send sticker by file ID
-      ctx
-      |> Sticker.id("CAACAgIAAxkBA...")
-      |> Sticker.send(chat_id)
-
-      # Send sticker from URL
-      ctx
-      |> Sticker.url("https://example.com/sticker.webp")
-      |> Sticker.send(chat_id)
-
-      # Send sticker from local file
-      ctx
-      |> Sticker.path("/tmp/sticker.webp")
-      |> Sticker.send(chat_id)
+  Supports Telegram file IDs, URLs, local files, and silent sends. See
+  [Messages and Media](messages-and-media.md).
   """
 
   alias TelegramEx.API

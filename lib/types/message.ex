@@ -2,8 +2,7 @@ defmodule TelegramEx.Types.Message do
   @moduledoc """
   Struct representing a Telegram Message object.
 
-  This struct contains all the information about an incoming message,
-  including text, media attachments, sender information, and chat details.
+  Contains incoming message fields used by handlers.
 
   ## Fields
 
@@ -20,14 +19,6 @@ defmodule TelegramEx.Types.Message do
   - `:caption` - Caption for media (nil if no caption)
   - `:message_thread_id` - Thread ID for forum chats (nil if not in a thread)
 
-  ## Examples
-
-      def handle_message(%Message{text: text, chat: chat}, ctx) do
-        # Pattern match on message fields
-        ctx
-        |> Message.text("You said: \#{text}")
-        |> Message.send(chat["id"])
-      end
   """
 
   @typedoc """
@@ -67,19 +58,6 @@ defmodule TelegramEx.Types.Message do
 
   @doc """
   Converts a raw Telegram API message map to a Message struct.
-
-  ## Parameters
-
-  - `map` - Raw message map from Telegram API
-
-  ## Returns
-
-  A `TelegramEx.Types.Message` struct.
-
-  ## Examples
-
-      iex> Message.from_map(%{"message_id" => 1, "text" => "Hello", ...})
-      %TelegramEx.Types.Message{message_id: 1, text: "Hello", ...}
   """
   @spec from_map(map()) :: t()
   def from_map(map) do

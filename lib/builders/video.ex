@@ -2,27 +2,8 @@ defmodule TelegramEx.Builder.Video do
   @moduledoc """
   Builder for video payloads.
 
-  This module provides a fluent API for sending videos from URLs, file paths,
-  or Telegram file IDs. Videos can include duration, cover images, and other options.
-
-  ## Examples
-
-      # Send video from local file
-      ctx
-      |> Video.path("/tmp/video.mp4")
-      |> Video.duration(120)
-      |> Video.send(chat_id)
-
-      # Send video from URL with cover
-      ctx
-      |> Video.url("https://example.com/video.mp4")
-      |> Video.cover_url("https://example.com/cover.jpg")
-      |> Video.send(chat_id)
-
-      # Send video by file ID
-      ctx
-      |> Video.id("example_file_id")
-      |> Video.send(chat_id)
+  Supports file IDs, URLs, local files, duration, cover images, and silent
+  sends. See [Messages and Media](messages-and-media.md).
   """
 
   alias TelegramEx.API

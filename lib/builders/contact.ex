@@ -2,25 +2,8 @@ defmodule TelegramEx.Builder.Contact do
   @moduledoc """
   Builder for contact payloads.
 
-  This module provides a fluent API for sending contact information.
-
-  ## Examples
-
-      # Send contact with first name only
-      ctx
-      |> Contact.contact("John", "+123456789")
-      |> Contact.send(chat_id)
-
-      # Send contact with first and last name
-      ctx
-      |> Contact.contact("John", "Doe", "+123456789")
-      |> Contact.send(chat_id)
-
-      # Send contact silently
-      ctx
-      |> Contact.contact("Jane", "+987654321")
-      |> Contact.silent()
-      |> Contact.send(chat_id)
+  Builds `sendContact` payloads. See
+  [Messages and Media](messages-and-media.md).
   """
 
   alias TelegramEx.API
@@ -38,11 +21,6 @@ defmodule TelegramEx.Builder.Contact do
 
   Updated context map with contact data set.
 
-  ## Examples
-
-      ctx
-      |> Contact.contact("John", "+1234567890")
-      |> Contact.send(chat_id)
   """
   @spec contact(map(), String.t(), String.t()) :: map()
   def contact(ctx, name, phone) do
@@ -66,11 +44,6 @@ defmodule TelegramEx.Builder.Contact do
 
   Updated context map with contact data set.
 
-  ## Examples
-
-      ctx
-      |> Contact.contact("John", "Doe", "+1234567890")
-      |> Contact.send(chat_id)
   """
   @spec contact(map(), String.t(), String.t(), String.t()) :: map()
   def contact(ctx, first_name, last_name, phone) do

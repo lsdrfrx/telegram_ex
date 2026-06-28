@@ -2,28 +2,8 @@ defmodule TelegramEx.Builder.Photo do
   @moduledoc """
   Builder for photo payloads.
 
-  This module provides a fluent API for sending photos from URLs, file paths,
-  or Telegram file IDs. Photos can include captions, parse modes, and other options.
-
-  ## Examples
-
-      # Send photo from URL
-      ctx
-      |> Photo.url("https://example.com/image.jpg")
-      |> Photo.caption("Look at this")
-      |> Photo.send(chat_id)
-
-      # Send photo from local file
-      ctx
-      |> Photo.path("/path/to/image.jpg")
-      |> Photo.caption("Local photo", "Markdown")
-      |> Photo.send(chat_id)
-
-      # Send photo silently
-      ctx
-      |> Photo.url("https://example.com/image.jpg")
-      |> Photo.silent()
-      |> Photo.send(chat_id)
+  Supports URLs, local file paths, captions, parse modes, and silent sends. See
+  [Messages and Media](messages-and-media.md).
   """
 
   alias TelegramEx.API
@@ -41,11 +21,6 @@ defmodule TelegramEx.Builder.Photo do
 
   Updated context map with photo URL set.
 
-  ## Examples
-
-      ctx
-      |> Photo.url("https://example.com/photo.jpg")
-      |> Photo.send(chat_id)
   """
   @spec url(map(), String.t()) :: map()
   def url(ctx, url) do
@@ -66,11 +41,6 @@ defmodule TelegramEx.Builder.Photo do
 
   Updated context map with photo file content set.
 
-  ## Examples
-
-      ctx
-      |> Photo.path("/tmp/photo.jpg")
-      |> Photo.send(chat_id)
   """
   @spec path(map(), String.t()) :: map()
   def path(ctx, path) do
@@ -94,12 +64,6 @@ defmodule TelegramEx.Builder.Photo do
 
   Updated context map with caption set.
 
-  ## Examples
-
-      ctx
-      |> Photo.url("https://example.com/photo.jpg")
-      |> Photo.caption("Beautiful sunset")
-      |> Photo.send(chat_id)
   """
   @spec caption(map(), String.t()) :: map()
   def caption(ctx, caption) do
@@ -121,12 +85,6 @@ defmodule TelegramEx.Builder.Photo do
 
   Updated context map with caption and parse mode set.
 
-  ## Examples
-
-      ctx
-      |> Photo.url("https://example.com/photo.jpg")
-      |> Photo.caption("*Bold* caption", "Markdown")
-      |> Photo.send(chat_id)
   """
   @spec caption(map(), String.t(), String.t()) :: map()
   def caption(ctx, caption, parse_mode) do
@@ -147,12 +105,6 @@ defmodule TelegramEx.Builder.Photo do
 
   Updated context map with silent flag set.
 
-  ## Examples
-
-      ctx
-      |> Photo.url("https://example.com/photo.jpg")
-      |> Photo.silent()
-      |> Photo.send(chat_id)
   """
   @spec silent(map()) :: map()
   def silent(ctx) do
@@ -174,11 +126,6 @@ defmodule TelegramEx.Builder.Photo do
   - `:ok` - Photo sent successfully
   - `{:error, reason}` - Failed to send photo
 
-  ## Examples
-
-      ctx
-      |> Photo.url("https://example.com/photo.jpg")
-      |> Photo.send(chat_id)
   """
   @spec send(map(), integer()) :: :ok | {:error, term()}
   def send(ctx, id) do

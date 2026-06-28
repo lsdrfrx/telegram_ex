@@ -3,27 +3,13 @@ defmodule TelegramEx.Command do
   Helpers for defining and registering Telegram bot commands.
 
   `defcommand/3` defines a regular `handle_message/2` clause for messages that
-  start with a Telegram command and stores the command metadata so it can be
-  registered with Telegram through `setMyCommands`.
-
-  Commands are matched without the leading slash:
-
-      defcommand "start", description: "Show welcome message", bind: [:ctx, :message] do
-        ctx
-        |> Message.text("Welcome!")
-        |> Message.send(message.chat["id"])
-      end
-
-  The `:bind` option controls which variables are exposed to the command body:
-
-  - `:ctx` - handler context
-  - `:message` - original Telegram message
-  - `:args` - command arguments split by spaces
-  - `:command` - `%TelegramEx.Command{}` struct for the matched command
+  start with a Telegram command and stores metadata for `setMyCommands`.
 
   `register_all/2` is called by `TelegramEx.Server` on startup. It reads command
   metadata from the bot module and its routers, then sends the list to Telegram
   using `setMyCommands`.
+
+  See [Commands](commands.md) for examples and binding rules.
 
   ## Fields
 
@@ -71,11 +57,7 @@ defmodule TelegramEx.Command do
   The command name should be passed without the leading slash. `:description`
   is required because Telegram requires it for `setMyCommands`.
 
-      defcommand "echo", description: "Echo command arguments", bind: [:ctx, :message, :args] do
-        ctx
-        |> Message.text(Enum.join(args, " "))
-        |> Message.send(message.chat["id"])
-      end
+  See [Commands](commands.md) for full examples.
   """
   defmacro defcommand(command_name, opts, do: block) do
     bind = Keyword.get(opts, :bind, [])

@@ -2,20 +2,8 @@ defmodule TelegramEx.Builder.Location do
   @moduledoc """
   Builder for location payloads.
 
-  This module provides a fluent API for sending geographic coordinates.
-
-  ## Examples
-
-      # Send location coordinates
-      ctx
-      |> Location.coordinates(40.7128, -74.0060)
-      |> Location.send(chat_id)
-
-      # Send location silently
-      ctx
-      |> Location.coordinates(55.7558, 37.6173)
-      |> Location.silent()
-      |> Location.send(chat_id)
+  Builds `sendLocation` payloads. See
+  [Messages and Media](messages-and-media.md).
   """
 
   alias TelegramEx.API
@@ -33,12 +21,6 @@ defmodule TelegramEx.Builder.Location do
 
   Updated context map with coordinates set.
 
-  ## Examples
-
-      # New York City coordinates
-      ctx
-      |> Location.coordinates(40.7128, -74.0060)
-      |> Location.send(chat_id)
   """
   @spec coordinates(map(), float(), float()) :: map()
   def coordinates(ctx, lat, lng) do

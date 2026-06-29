@@ -3,7 +3,8 @@ defmodule TelegramEx.Types.CallbackQuery do
   Struct representing a Telegram CallbackQuery object.
 
   A callback query is created when a user presses an inline keyboard button.
-  It contains information about the button pressed and the message it was attached to.
+  It contains information about the button pressed and the message it was
+  attached to.
 
   ## Fields
 
@@ -15,14 +16,6 @@ defmodule TelegramEx.Types.CallbackQuery do
   - `:data` - Data associated with the callback button
   - `:message_thread_id` - Thread ID for forum chats (if applicable)
 
-  ## Examples
-
-      def handle_callback(%CallbackQuery{data: "confirm"} = callback, ctx) do
-        ctx
-        |> Message.text("Confirmed!")
-        |> Message.answer_callback_query(callback)
-        |> Message.send(callback.message.chat["id"])
-      end
   """
 
   alias TelegramEx.Types.Message
@@ -54,19 +47,6 @@ defmodule TelegramEx.Types.CallbackQuery do
 
   @doc """
   Converts a raw Telegram API callback query map to a CallbackQuery struct.
-
-  ## Parameters
-
-  - `map` - Raw callback query map from Telegram API
-
-  ## Returns
-
-  A `TelegramEx.Types.CallbackQuery` struct.
-
-  ## Examples
-
-      iex> CallbackQuery.from_map(%{"id" => "123", "data" => "confirm", ...})
-      %TelegramEx.Types.CallbackQuery{id: "123", data: "confirm", ...}
   """
   @spec from_map(map()) :: t()
   def from_map(map) do

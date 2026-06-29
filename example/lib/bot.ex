@@ -1,7 +1,7 @@
 defmodule Example.Bot do
   use TelegramEx,
     name: :example_bot,
-    routers: [Example.Routers.Admin, Example.Routers.Survey]
+    routers: [Example.Routers.Commands, Example.Routers.Admin, Example.Routers.Survey]
 
   # ── /start ─────────────────────────────────────────────────────────
   # Reply keyboard with all available commands
@@ -12,7 +12,8 @@ defmodule Example.Bot do
       ["/photo", "/document", "/sticker"],
       ["/video", "/location", "/contact"],
       ["/silent", "/admin", "/survey"],
-      ["/poll", "/quiz"]
+      ["/poll", "/quiz"],
+      ["/command_demo", "/echo hello"]
     ]
 
     ctx
@@ -54,10 +55,21 @@ defmodule Example.Bot do
     <b>FSM & Routers</b>
     /admin — enter admin mode (Router + FSM)
     /survey — start a multi-step survey (FSM with data)
+
+    <b>Command DSL</b>
+    /command_demo — defcommand example in a router
+    /echo text — defcommand example with arguments
     """
 
     ctx
     |> Message.text(help, "HTML")
+    |> Message.send(chat["id"])
+  end
+
+  def handle_message(%{text: "/clear", chat: chat}, ctx) do
+    ctx
+    |> Message.text("Reply keyboard cleared.")
+    |> Message.remove_keyboard()
     |> Message.send(chat["id"])
   end
 

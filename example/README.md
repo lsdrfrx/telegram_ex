@@ -25,6 +25,8 @@ A demo bot that showcases every feature of the [TelegramEx](https://github.com/l
 | `/survey`    | Multi-step FSM with data accumulation |
 | `/poll`      | Regular poll with multiple answers    |
 | `/quiz`      | Quiz with explanation                 |
+| `/command_demo` | Command DSL in a separate router   |
+| `/echo`      | Command DSL with arguments            |
 
 ## Running
 

@@ -13,6 +13,7 @@ defmodule TelegramEx.MixProject do
       description: description(),
       deps: deps(),
       dialyzer: dialyzer(),
+      docs: docs(),
       source_url: "https://github.com/lsdrfrx/telegram_ex"
     ]
   end
@@ -46,10 +47,40 @@ defmodule TelegramEx.MixProject do
     "Elixir library for building Telegram bots with macro-based API"
   end
 
+  defp docs do
+    [
+      main: "overview",
+      extras: [
+        "guides/overview.md",
+        "guides/getting-started.md",
+        "guides/development.md",
+        "guides/commands.md",
+        "guides/messages-and-media.md",
+        "guides/routers.md",
+        "guides/fsm.md",
+        "guides/examples.md",
+        "CHANGELOG.md"
+      ],
+      groups_for_extras: [
+        Guides: [
+          "guides/overview.md",
+          "guides/getting-started.md",
+          "guides/development.md",
+          "guides/commands.md",
+          "guides/messages-and-media.md",
+          "guides/routers.md",
+          "guides/fsm.md",
+          "guides/examples.md"
+        ],
+        Changelog: ["CHANGELOG.md"]
+      ]
+    ]
+  end
+
   defp package do
     [
       name: "telegram_ex",
-      files: ~w(lib .formatter.exs mix.exs README* LICENSE*
+      files: ~w(lib guides .formatter.exs mix.exs README* LICENSE*
                 CHANGELOG*),
       licenses: ["MIT"],
       links: %{"GitHub" => "https://github.com/lsdrfrx/telegram_ex"}

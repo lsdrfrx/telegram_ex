@@ -2,20 +2,22 @@ defmodule TelegramEx.Builder.Message do
   @moduledoc """
   Builder for constructing and sending text messages.
 
-  Functions update the builder context and `send/2` sends the final
+  Functions update an effect context and `send/2` sends the final
   `sendMessage` request. See [Messages and Media](messages-and-media.md).
   """
 
   alias TelegramEx.API
+  alias TelegramEx.Builder
+  alias TelegramEx.Effect
+
+  @type input :: map() | Effect.t()
 
   @doc """
   Sets the text content of the message.
   """
-  @spec text(map(), String.t()) :: map()
-  def text(ctx, text) do
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:text, text)
-    |> then(&Map.put(ctx, :payload, &1))
+  @spec text(input(), String.t()) :: Effect.t()
+  def text(input, text) do
+    Builder.put_payload(input, :text, text)
   end
 
   @doc """
@@ -23,12 +25,11 @@ defmodule TelegramEx.Builder.Message do
 
   `parse_mode` is passed through to Telegram.
   """
-  @spec text(map(), String.t(), String.t()) :: map()
-  def text(ctx, text, parse_mode) do
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:text, text)
-    |> Map.put(:parse_mode, parse_mode)
-    |> then(&Map.put(ctx, :payload, &1))
+  @spec text(input(), String.t(), String.t()) :: Effect.t()
+  def text(input, text, parse_mode) do
+    input
+    |> Builder.put_payload(:text, text)
+    |> Builder.put_payload(:parse_mode, parse_mode)
   end
 
   @doc """
@@ -36,11 +37,9 @@ defmodule TelegramEx.Builder.Message do
 
   Inline keyboards appear directly below the message and trigger callback queries.
   """
-  @spec inline_keyboard(map(), list(list(map()))) :: map()
-  def inline_keyboard(ctx, keyboard) do
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:reply_markup, %{inline_keyboard: keyboard})
-    |> then(&Map.put(ctx, :payload, &1))
+  @spec inline_keyboard(input(), list(list(map()))) :: Effect.t()
+  def inline_keyboard(input, keyboard) do
+    Builder.put_payload(input, :reply_markup, %{inline_keyboard: keyboard})
   end
 
   @doc """
@@ -48,31 +47,25 @@ defmodule TelegramEx.Builder.Message do
 
   Reply keyboards replace the user's keyboard with custom buttons.
   """
-  @spec reply_keyboard(map(), list(list(String.t())), keyword()) :: map()
-  def reply_keyboard(ctx, keyboard, opts) do
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:reply_markup, Map.merge(%{keyboard: keyboard}, Map.new(opts)))
-    |> then(&Map.put(ctx, :payload, &1))
+  @spec reply_keyboard(input(), list(list(String.t())), keyword()) :: Effect.t()
+  def reply_keyboard(input, keyboard, opts) do
+    Builder.put_payload(input, :reply_markup, Map.merge(%{keyboard: keyboard}, Map.new(opts)))
   end
 
   @doc """
   Removes the custom keyboard.
   """
-  @spec remove_keyboard(map()) :: map()
-  def remove_keyboard(ctx) do
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:reply_markup, %{remove_keyboard: true})
-    |> then(&Map.put(ctx, :payload, &1))
+  @spec remove_keyboard(input()) :: Effect.t()
+  def remove_keyboard(input) do
+    Builder.put_payload(input, :reply_markup, %{remove_keyboard: true})
   end
 
   @doc """
   Sends the message without notification sound.
   """
-  @spec silent(map()) :: map()
-  def silent(ctx) do
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:disable_notification, true)
-    |> then(&Map.put(ctx, :payload, &1))
+  @spec silent(input()) :: Effect.t()
+  def silent(input) do
+    Builder.put_payload(input, :disable_notification, true)
   end
 
   @doc """
@@ -80,10 +73,16 @@ defmodule TelegramEx.Builder.Message do
 
   This should be called when handling callback queries to acknowledge them.
   """
-  @spec answer_callback_query(map(), TelegramEx.Types.CallbackQuery.t()) :: map()
-  def answer_callback_query(ctx, callback) do
-    API.answer_callback_query(Process.get(:token), callback)
-    ctx
+  @spec answer_callback_query(input(), TelegramEx.Types.CallbackQuery.t()) :: Effect.t()
+  def answer_callback_query(input, callback) do
+    input
+    |> Effect.wrap()
+    |> Effect.then(fn ctx ->
+      case API.answer_callback_query(ctx.token, callback) do
+        :ok -> {:ok, ctx}
+        {:error, reason} -> {:error, reason}
+      end
+    end)
   end
 
   @doc """
@@ -91,12 +90,21 @@ defmodule TelegramEx.Builder.Message do
 
   This is the final step in the builder pipeline that actually sends the message.
   """
-  @spec send(map(), integer()) :: :ok | {:error, term()}
-  def send(ctx, id) do
-    ctx
-    |> Map.put(:chat_id, id)
-    |> Map.put(:method, "sendMessage")
-    |> Map.put(:format, :json)
-    |> API.request()
+  @spec send(input(), integer()) :: Effect.t()
+  def send(input, id) do
+    input
+    |> Effect.wrap()
+    |> Effect.then(fn ctx ->
+      new_ctx =
+        ctx
+        |> Map.put(:chat_id, id)
+        |> Map.put(:method, "sendMessage")
+        |> Map.put(:format, :json)
+
+      case API.request(new_ctx) do
+        :ok -> {:ok, new_ctx}
+        {:error, reason} -> {:error, reason}
+      end
+    end)
   end
 end

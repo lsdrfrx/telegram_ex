@@ -7,132 +7,73 @@ defmodule TelegramEx.Builder.Photo do
   """
 
   alias TelegramEx.API
-  alias TelegramEx.MimeType
+  alias TelegramEx.Builder
+  alias TelegramEx.Effect
+
+  @type input :: map() | Effect.t()
 
   @doc """
   Sets the photo from a URL.
-
-  ## Parameters
-
-  - `ctx` - Context map
-  - `url` - URL of the photo
-
-  ## Returns
-
-  Updated context map with photo URL set.
-
   """
-  @spec url(map(), String.t()) :: map()
-  def url(ctx, url) do
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:photo, url)
-    |> then(&Map.put(ctx, :payload, &1))
+  @spec url(input(), String.t()) :: Effect.t()
+  def url(input, url) do
+    Builder.put_payload(input, :photo, url)
   end
 
   @doc """
   Sets the photo from a local file path.
 
-  ## Parameters
-
-  - `ctx` - Context map
-  - `path` - Path to the photo file
-
-  ## Returns
-
-  Updated context map with photo file content set.
-
+  If the file cannot be read, the returned effect contains `{:file, reason}`.
   """
-  @spec path(map(), String.t()) :: map()
-  def path(ctx, path) do
-    filename = Path.basename(path)
-    content = File.read!(path)
-
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:photo, {content, filename: filename, content_type: MimeType.from_path(path)})
-    |> then(&Map.put(ctx, :payload, &1))
+  @spec path(input(), String.t()) :: Effect.t()
+  def path(input, path) do
+    Builder.put_file_payload(input, :photo, path)
   end
 
   @doc """
   Sets the photo caption.
-
-  ## Parameters
-
-  - `ctx` - Context map
-  - `caption` - Caption text
-
-  ## Returns
-
-  Updated context map with caption set.
-
   """
-  @spec caption(map(), String.t()) :: map()
-  def caption(ctx, caption) do
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:caption, caption)
-    |> then(&Map.put(ctx, :payload, &1))
+  @spec caption(input(), String.t()) :: Effect.t()
+  def caption(input, caption) do
+    Builder.put_payload(input, :caption, caption)
   end
 
   @doc """
   Sets the photo caption with parse mode.
-
-  ## Parameters
-
-  - `ctx` - Context map
-  - `caption` - Caption text
-  - `parse_mode` - Parse mode ("Markdown", "MarkdownV2", or "HTML")
-
-  ## Returns
-
-  Updated context map with caption and parse mode set.
-
   """
-  @spec caption(map(), String.t(), String.t()) :: map()
-  def caption(ctx, caption, parse_mode) do
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:caption, caption)
-    |> Map.put(:parse_mode, parse_mode)
-    |> then(&Map.put(ctx, :payload, &1))
+  @spec caption(input(), String.t(), String.t()) :: Effect.t()
+  def caption(input, caption, parse_mode) do
+    input
+    |> Builder.put_payload(:caption, caption)
+    |> Builder.put_payload(:parse_mode, parse_mode)
   end
 
   @doc """
   Sends the photo without notification sound.
-
-  ## Parameters
-
-  - `ctx` - Context map
-
-  ## Returns
-
-  Updated context map with silent flag set.
-
   """
-  @spec silent(map()) :: map()
-  def silent(ctx) do
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:disable_notification, true)
-    |> then(&Map.put(ctx, :payload, &1))
+  @spec silent(input()) :: Effect.t()
+  def silent(input) do
+    Builder.put_payload(input, :disable_notification, true)
   end
 
   @doc """
   Sends the photo to the specified chat.
-
-  ## Parameters
-
-  - `ctx` - Context map with accumulated photo data
-  - `id` - Chat ID to send the photo to
-
-  ## Returns
-
-  - `:ok` - Photo sent successfully
-  - `{:error, reason}` - Failed to send photo
-
   """
-  @spec send(map(), integer()) :: :ok | {:error, term()}
-  def send(ctx, id) do
-    ctx
-    |> Map.put(:chat_id, id)
-    |> Map.put(:method, "sendPhoto")
-    |> Map.put(:format, :multipart)
-    |> API.request()
+  @spec send(input(), integer()) :: Effect.t()
+  def send(input, id) do
+    input
+    |> Effect.wrap()
+    |> Effect.then(fn ctx ->
+      new_ctx =
+        ctx
+        |> Map.put(:chat_id, id)
+        |> Map.put(:method, "sendPhoto")
+        |> Map.put(:format, :multipart)
+
+      case API.request(new_ctx) do
+        :ok -> {:ok, new_ctx}
+        {:error, reason} -> {:error, reason}
+      end
+    end)
   end
 end

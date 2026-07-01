@@ -57,6 +57,7 @@ Supervisor.start_link(children, strategy: :one_for_one)
 
 - [Getting Started](guides/getting-started.md)
 - [Development Model](guides/development.md)
+- [Effects](guides/effects.md)
 - [Commands](guides/commands.md)
 - [Messages and Media](guides/messages-and-media.md)
 - [Routers](guides/routers.md)
@@ -66,6 +67,7 @@ Supervisor.start_link(children, strategy: :one_for_one)
 ## Features
 
 - message and callback handlers with pattern matching
+- effect-based builder pipelines for error-aware execution
 - command DSL with Telegram command menu registration
 - fluent builders for messages, keyboards, media, polls, contacts, and locations
 - router modules for organizing larger bots

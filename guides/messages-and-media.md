@@ -1,12 +1,14 @@
 # Messages and Media
 
 TelegramEx builders create Telegram API payloads through pipelines. A builder
-does not send anything until the final `send/2` call.
+does not send anything until the final `send/2` call. Each builder returns
+`TelegramEx.Effect`, so file and API errors can move through the same pipeline
+as successful payload data.
 
 ## Builder Context
 
-Every handler receives `ctx`. Builder functions add a `:payload` map and return
-the updated context:
+Every handler receives `ctx`. Builder functions wrap it in an effect, add a
+`:payload` map to the effect context, and return the effect:
 
 ```elixir
 ctx
@@ -16,7 +18,8 @@ ctx
 
 At this point the context contains enough payload data, but no HTTP request has
 been made. `send/2` adds the target chat, method, and request format, then calls
-`TelegramEx.API.request/1`.
+`TelegramEx.API.request/1`. On success it returns a successful effect. On
+failure it returns an effect with `:error` set.
 
 ## Text Messages
 
@@ -166,20 +169,50 @@ calling the API:
 For local media, TelegramEx uses `TelegramEx.MimeType` to infer the content type
 from the file extension.
 
+Local file builders can fail before the request is sent. For example,
+`Document.path/2` reads the file immediately and stores `{:file, reason}` in the
+effect if the file cannot be read. Later steps are skipped after that error, so
+the pipeline keeps its shape without sending an incomplete request.
+
 ## Handling Send Results
 
-`send/2` returns the API result:
+`send/2` returns `TelegramEx.Effect`. In most handlers, return it directly and
+let the server convert it to a normal handler result:
+
+```elixir
+def handle_message(%{text: "/ping", chat: chat}, ctx) do
+  ctx
+  |> Message.text("pong")
+  |> Message.send(chat["id"])
+end
+```
+
+When a workflow needs custom logging, retrying, cleanup, or fallback behavior,
+match on the effect explicitly:
 
 ```elixir
 case Message.send(ctx, chat_id) do
-  :ok ->
+  %TelegramEx.Effect{error: nil} ->
     :ok
 
-  {:error, reason} ->
+  %TelegramEx.Effect{error: reason} ->
     Logger.error("Telegram request failed: #{inspect(reason)}")
 end
 ```
 
-Most examples return the `send/2` result directly. For production workflows,
-handle failures where retrying or user feedback matters.
+For local media, handle file errors separately when that distinction matters:
 
+```elixir
+case Document.path(ctx, "/tmp/report.pdf") |> Document.send(chat_id) do
+  %TelegramEx.Effect{error: nil} ->
+    :ok
+
+  %TelegramEx.Effect{error: {:file, reason}} ->
+    Logger.error("Could not read report: #{inspect(reason)}")
+
+  %TelegramEx.Effect{error: reason} ->
+    Logger.error("Could not send report: #{inspect(reason)}")
+end
+```
+
+See [Effects](effects.md) for the full execution model.

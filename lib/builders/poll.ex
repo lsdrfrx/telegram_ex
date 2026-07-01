@@ -7,72 +7,80 @@ defmodule TelegramEx.Builder.Poll do
   """
 
   alias TelegramEx.API
+  alias TelegramEx.Builder
+  alias TelegramEx.Effect
 
-  def poll(ctx, question, options) do
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:question, question)
-    |> Map.put(:options, options)
-    |> Map.put(:type, "regular")
-    |> then(&Map.put(ctx, :payload, &1))
+  @type input :: map() | Effect.t()
+
+  @spec poll(input(), String.t(), list(String.t())) :: Effect.t()
+  def poll(input, question, options) do
+    input
+    |> Builder.put_payload(:question, question)
+    |> Builder.put_payload(:options, options)
+    |> Builder.put_payload(:type, "regular")
   end
 
-  def quiz(ctx, question, options, correct_option_id) do
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:question, question)
-    |> Map.put(:options, options)
-    |> Map.put(:type, "quiz")
-    |> Map.put(:correct_option_id, correct_option_id)
-    |> then(&Map.put(ctx, :payload, &1))
+  @spec quiz(input(), String.t(), list(String.t()), integer()) :: Effect.t()
+  def quiz(input, question, options, correct_option_id) do
+    input
+    |> Builder.put_payload(:question, question)
+    |> Builder.put_payload(:options, options)
+    |> Builder.put_payload(:type, "quiz")
+    |> Builder.put_payload(:correct_option_id, correct_option_id)
   end
 
-  def anonymous(ctx, boolean) do
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:is_anonymous, boolean)
-    |> then(&Map.put(ctx, :payload, &1))
+  @spec anonymous(input(), boolean()) :: Effect.t()
+  def anonymous(input, boolean) do
+    Builder.put_payload(input, :is_anonymous, boolean)
   end
 
-  def multiple_answers(ctx, boolean) do
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:allows_multiple_answers, boolean)
-    |> then(&Map.put(ctx, :payload, &1))
+  @spec multiple_answers(input(), boolean()) :: Effect.t()
+  def multiple_answers(input, boolean) do
+    Builder.put_payload(input, :allows_multiple_answers, boolean)
   end
 
-  def explanation(ctx, text) do
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:explanation, text)
-    |> then(&Map.put(ctx, :payload, &1))
+  @spec explanation(input(), String.t()) :: Effect.t()
+  def explanation(input, text) do
+    Builder.put_payload(input, :explanation, text)
   end
 
-  def explanation(ctx, text, parse_mode) do
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:explanation, text)
-    |> Map.put(:explanation_parse_mode, parse_mode)
-    |> then(&Map.put(ctx, :payload, &1))
+  @spec explanation(input(), String.t(), String.t()) :: Effect.t()
+  def explanation(input, text, parse_mode) do
+    input
+    |> Builder.put_payload(:explanation, text)
+    |> Builder.put_payload(:explanation_parse_mode, parse_mode)
   end
 
-  def open_period(ctx, seconds) do
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:open_period, seconds)
-    |> then(&Map.put(ctx, :payload, &1))
+  @spec open_period(input(), integer()) :: Effect.t()
+  def open_period(input, seconds) do
+    Builder.put_payload(input, :open_period, seconds)
   end
 
-  def close_date(ctx, timestamp) do
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:close_date, timestamp)
-    |> then(&Map.put(ctx, :payload, &1))
+  @spec close_date(input(), integer()) :: Effect.t()
+  def close_date(input, timestamp) do
+    Builder.put_payload(input, :close_date, timestamp)
   end
 
-  def silent(ctx) do
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:disable_notification, true)
-    |> then(&Map.put(ctx, :payload, &1))
+  @spec silent(input()) :: Effect.t()
+  def silent(input) do
+    Builder.put_payload(input, :disable_notification, true)
   end
 
-  def send(ctx, id) do
-    ctx
-    |> Map.put(:chat_id, id)
-    |> Map.put(:method, "sendPoll")
-    |> Map.put(:format, :json)
-    |> API.request()
+  @spec send(input(), integer()) :: Effect.t()
+  def send(input, id) do
+    input
+    |> Effect.wrap()
+    |> Effect.then(fn ctx ->
+      new_ctx =
+        ctx
+        |> Map.put(:chat_id, id)
+        |> Map.put(:method, "sendPoll")
+        |> Map.put(:format, :json)
+
+      case API.request(new_ctx) do
+        :ok -> {:ok, new_ctx}
+        {:error, reason} -> {:error, reason}
+      end
+    end)
   end
 end

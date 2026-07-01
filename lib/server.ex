@@ -8,7 +8,7 @@ defmodule TelegramEx.Server do
 
   use GenServer
   require Logger
-  alias TelegramEx.{API, Command, Config, FSM, Types}
+  alias TelegramEx.{API, Command, Config, Effect, FSM, Types}
 
   @type chat_id :: TelegramEx.Types.chat_id()
 
@@ -135,23 +135,30 @@ defmodule TelegramEx.Server do
     |> handle_result(bot_name, chat_id, state)
   end
 
-  defp handle_result({:transition, new_state, data}, bot_name, chat_id, _state),
-    do: FSM.set_state(bot_name, chat_id, new_state, data)
+  defp handle_result(result, bot_name, chat_id, state) do
+    case Effect.to_result(result) do
+      {:transition, new_state, data} ->
+        FSM.set_state(bot_name, chat_id, new_state, data)
 
-  defp handle_result({:transition, new_state}, bot_name, chat_id, _state),
-    do: FSM.set_state(bot_name, chat_id, new_state)
+      {:transition, new_state} ->
+        FSM.set_state(bot_name, chat_id, new_state)
 
-  defp handle_result({:stay, data}, bot_name, chat_id, state),
-    do: FSM.set_state(bot_name, chat_id, state, data)
+      {:stay, data} ->
+        FSM.set_state(bot_name, chat_id, state, data)
 
-  defp handle_result(:ok, _bot_name, _chat_id, _state), do: :ok
-  defp handle_result(:pass, _bot_name, _chat_id, _state), do: :ok
+      :ok ->
+        :ok
 
-  defp handle_result({:error, reason}, _bot_name, _chat_id, _state),
-    do: Logger.error("Handler error: #{inspect(reason)}")
+      :pass ->
+        :ok
 
-  defp handle_result(error, _bot_name, _chat_id, _state),
-    do: Logger.error("Unknown handler response: #{inspect(error)}")
+      {:error, reason} ->
+        Logger.error("Handler error: #{inspect(reason)}")
+
+      unknown ->
+        Logger.error("Unknown handler response: #{inspect(unknown)}")
+    end
+  end
 
   @spec get_chat_id(Types.Message.t() | Types.CallbackQuery.t()) :: chat_id()
   defp get_chat_id(%Types.CallbackQuery{message: %{chat: chat}}), do: chat["id"]

@@ -7,165 +7,109 @@ defmodule TelegramEx.Builder.Video do
   """
 
   alias TelegramEx.API
+  alias TelegramEx.Builder
+  alias TelegramEx.Effect
   alias TelegramEx.MimeType
+
+  @type input :: map() | Effect.t()
 
   @doc """
   Sets the video by Telegram file ID.
-
-  ## Parameters
-
-  - `ctx` - Context map
-  - `id` - Telegram file ID
-
-  ## Returns
-
-  Updated context map with video ID set.
   """
-  @spec id(map(), String.t()) :: map()
-  def id(ctx, id) do
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:video, id)
-    |> then(&Map.put(ctx, :payload, &1))
+  @spec id(input(), String.t()) :: Effect.t()
+  def id(input, id) do
+    Builder.put_payload(input, :video, id)
   end
 
   @doc """
   Sets the video from a URL.
-
-  ## Parameters
-
-  - `ctx` - Context map
-  - `url` - URL of the video
-
-  ## Returns
-
-  Updated context map with video URL set.
   """
-  @spec url(map(), String.t()) :: map()
-  def url(ctx, url) do
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:video, url)
-    |> then(&Map.put(ctx, :payload, &1))
+  @spec url(input(), String.t()) :: Effect.t()
+  def url(input, url) do
+    Builder.put_payload(input, :video, url)
   end
 
   @doc """
   Sets the video from a local file path.
 
-  ## Parameters
-
-  - `ctx` - Context map
-  - `path` - Path to the video file
-
-  ## Returns
-
-  Updated context map with video file content set.
+  If the file cannot be read, the returned effect contains `{:file, reason}`.
   """
-  @spec path(map(), String.t()) :: map()
-  def path(ctx, path) do
-    filename = Path.basename(path)
-    content = File.read!(path)
-
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:video, {content, filename: filename, content_type: MimeType.from_path(path)})
-    |> then(&Map.put(ctx, :payload, &1))
+  @spec path(input(), String.t()) :: Effect.t()
+  def path(input, path) do
+    put_file_payload(input, :video, path)
   end
 
   @doc """
   Sets the video duration in seconds.
-
-  ## Parameters
-
-  - `ctx` - Context map
-  - `seconds` - Duration in seconds
-
-  ## Returns
-
-  Updated context map with duration set.
   """
-  @spec duration(map(), integer()) :: map()
-  def duration(ctx, seconds) do
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:duration, seconds)
-    |> then(&Map.put(ctx, :payload, &1))
+  @spec duration(input(), integer()) :: Effect.t()
+  def duration(input, seconds) do
+    Builder.put_payload(input, :duration, seconds)
   end
 
   @doc """
   Sets the video cover image from a local file path.
 
-  ## Parameters
-
-  - `ctx` - Context map
-  - `path` - Path to the cover image file
-
-  ## Returns
-
-  Updated context map with cover image content set.
+  If the file cannot be read, the returned effect contains `{:file, reason}`.
   """
-  @spec cover_path(map(), String.t()) :: map()
-  def cover_path(ctx, path) do
-    filename = Path.basename(path)
-    content = File.read!(path)
-
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:cover, {content, filename: filename, content_type: MimeType.from_path(path)})
-    |> then(&Map.put(ctx, :payload, &1))
+  @spec cover_path(input(), String.t()) :: Effect.t()
+  def cover_path(input, path) do
+    put_file_payload(input, :cover, path)
   end
 
   @doc """
   Sets the video cover image from a URL.
-
-  ## Parameters
-
-  - `ctx` - Context map
-  - `url` - URL of the cover image
-
-  ## Returns
-
-  Updated context map with cover image URL set.
   """
-  @spec cover_url(map(), String.t()) :: map()
-  def cover_url(ctx, url) do
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:cover, url)
-    |> then(&Map.put(ctx, :payload, &1))
+  @spec cover_url(input(), String.t()) :: Effect.t()
+  def cover_url(input, url) do
+    Builder.put_payload(input, :cover, url)
   end
 
   @doc """
   Sends the video without notification sound.
-
-  ## Parameters
-
-  - `ctx` - Context map
-
-  ## Returns
-
-  Updated context map with silent flag set.
   """
-  @spec silent(map()) :: map()
-  def silent(ctx) do
-    Map.get(ctx, :payload, %{})
-    |> Map.put(:disable_notification, true)
-    |> then(&Map.put(ctx, :payload, &1))
+  @spec silent(input()) :: Effect.t()
+  def silent(input) do
+    Builder.put_payload(input, :disable_notification, true)
   end
 
   @doc """
   Sends the video to the specified chat.
-
-  ## Parameters
-
-  - `ctx` - Context map with accumulated video data
-  - `id` - Chat ID to send the video to
-
-  ## Returns
-
-  - `:ok` - Video sent successfully
-  - `{:error, reason}` - Failed to send video
   """
-  @spec send(map(), integer()) :: :ok | {:error, term()}
-  def send(ctx, id) do
-    ctx
-    |> Map.put(:chat_id, id)
-    |> Map.put(:method, "sendVideo")
-    |> Map.put(:format, :multipart)
-    |> API.request()
+  @spec send(input(), integer()) :: Effect.t()
+  def send(input, id) do
+    input
+    |> Effect.wrap()
+    |> Effect.then(fn ctx ->
+      new_ctx =
+        ctx
+        |> Map.put(:chat_id, id)
+        |> Map.put(:method, "sendVideo")
+        |> Map.put(:format, :multipart)
+
+      case API.request(new_ctx) do
+        :ok -> {:ok, new_ctx}
+        {:error, reason} -> {:error, reason}
+      end
+    end)
+  end
+
+  defp put_file_payload(input, key, path) do
+    input
+    |> Effect.wrap()
+    |> Effect.then(fn ctx ->
+      filename = Path.basename(path)
+
+      with {:ok, content} <- File.read(path) do
+        payload =
+          ctx
+          |> Map.get(:payload, %{})
+          |> Map.put(key, {content, filename: filename, content_type: MimeType.from_path(path)})
+
+        {:ok, Map.put(ctx, :payload, payload)}
+      else
+        {:error, reason} -> {:error, {:file, reason}}
+      end
+    end)
   end
 end

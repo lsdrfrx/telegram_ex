@@ -7,7 +7,7 @@ defmodule TelegramEx.Builder.Document do
   """
 
   alias TelegramEx.API
-  alias TelegramEx.MimeType
+  alias TelegramEx.Builder
   alias TelegramEx.Effect
 
   @type input :: map() | Effect.t()
@@ -29,13 +29,7 @@ defmodule TelegramEx.Builder.Document do
   """
   @spec url(input(), String.t()) :: Effect.t()
   def url(input, url) do
-    input
-    |> Effect.wrap()
-    |> Effect.map_ctx(fn ctx ->
-      Map.get(ctx, :payload, %{})
-      |> Map.put(:document, url)
-      |> then(&Map.put(ctx, :payload, &1))
-    end)
+    Builder.put_payload(input, :document, url)
   end
 
   @doc """
@@ -55,22 +49,7 @@ defmodule TelegramEx.Builder.Document do
   """
   @spec path(input(), String.t()) :: Effect.t()
   def path(input, path) do
-    input
-    |> Effect.wrap()
-    |> Effect.then(fn ctx ->
-      filename = Path.basename(path)
-
-      with {:ok, content} <- File.read(path) do
-        Map.get(ctx, :payload, %{})
-        |> Map.put(
-          :document,
-          {content, filename: filename, content_type: MimeType.from_path(path)}
-        )
-        |> then(fn payload -> {:ok, Map.put(ctx, :payload, payload)} end)
-      else
-        {:error, reason} -> {:error, {:file, reason}}
-      end
-    end)
+    Builder.put_file_payload(input, :document, path)
   end
 
   @doc """
@@ -90,13 +69,7 @@ defmodule TelegramEx.Builder.Document do
   """
   @spec caption(input(), String.t()) :: Effect.t()
   def caption(input, caption) do
-    input
-    |> Effect.wrap()
-    |> Effect.map_ctx(fn ctx ->
-      Map.get(ctx, :payload, %{})
-      |> Map.put(:caption, caption)
-      |> then(&Map.put(ctx, :payload, &1))
-    end)
+    Builder.put_payload(input, :caption, caption)
   end
 
   @doc """
@@ -118,13 +91,8 @@ defmodule TelegramEx.Builder.Document do
   @spec caption(input(), String.t(), String.t()) :: Effect.t()
   def caption(input, caption, parse_mode) do
     input
-    |> Effect.wrap()
-    |> Effect.map_ctx(fn ctx ->
-      Map.get(ctx, :payload, %{})
-      |> Map.put(:caption, caption)
-      |> Map.put(:parse_mode, parse_mode)
-      |> then(&Map.put(ctx, :payload, &1))
-    end)
+    |> Builder.put_payload(:caption, caption)
+    |> Builder.put_payload(:parse_mode, parse_mode)
   end
 
   @doc """
@@ -143,13 +111,7 @@ defmodule TelegramEx.Builder.Document do
   """
   @spec silent(input()) :: Effect.t()
   def silent(input) do
-    input
-    |> Effect.wrap()
-    |> Effect.map_ctx(fn ctx ->
-      Map.get(ctx, :payload, %{})
-      |> Map.put(:disable_notification, true)
-      |> then(fn payload -> Map.put(ctx, :payload, payload) end)
-    end)
+    Builder.put_payload(input, :disable_notification, true)
   end
 
   @doc """

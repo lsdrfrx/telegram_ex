@@ -46,13 +46,4 @@ defmodule TelegramEx.Effect do
         effect
     end
   end
-
-  def tap() do
-  end
-
-  def ensure() do
-  end
-
-  def recover() do
-  end
 end

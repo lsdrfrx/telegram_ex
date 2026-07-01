@@ -61,48 +61,12 @@ defmodule TelegramEx.Command do
   """
   defmacro defcommand(command_name, opts, do: block) do
     bind = Keyword.get(opts, :bind, [])
-
     message_var = Macro.var(:message, nil)
     ctx_var = Macro.var(:ctx, nil)
     args_var = Macro.var(:args, nil)
     command_var = Macro.var(:command, nil)
     description = Keyword.fetch!(opts, :description)
-
-    args_assignment =
-      if :args in bind do
-        quote do
-          unquote(args_var) = String.split(unquote(message_var).text, " ") |> Enum.drop(1)
-        end
-      end
-
-    command_assignment =
-      if :command in bind do
-        quote do
-          unquote(command_var) = %TelegramEx.Command{
-            command: unquote(command_name),
-            description: unquote(opts[:description]),
-            message: unquote(message_var)
-          }
-        end
-      end
-
-    bindings =
-      for name <- bind do
-        var = Macro.var(name, nil)
-
-        source =
-          case name do
-            :message -> message_var
-            :ctx -> ctx_var
-            :args -> args_var
-            :command -> command_var
-            _ -> raise ArgumentError, "Unsupported bind variable: #{name}."
-          end
-
-        quote do
-          var!(unquote(var)) = unquote(source)
-        end
-      end
+    vars = %{message: message_var, ctx: ctx_var, args: args_var, command: command_var}
 
     quote do
       @commands %{command: unquote(command_name), description: unquote(description)}
@@ -111,13 +75,60 @@ defmodule TelegramEx.Command do
             %{text: "/#{unquote(command_name)}" <> _rest} = unquote(message_var),
             unquote(ctx_var)
           ) do
-        unquote(args_assignment)
-        unquote(command_assignment)
-        unquote_splicing(bindings)
+        unquote(args_assignment(bind, vars))
+        unquote(command_assignment(bind, vars, command_name, description))
+        unquote_splicing(bindings(bind, vars))
 
         unquote(block)
       end
     end
+  end
+
+  defp args_assignment(bind, %{args: args_var, message: message_var}) do
+    if :args in bind do
+      quote do
+        unquote(args_var) = String.split(unquote(message_var).text, " ") |> Enum.drop(1)
+      end
+    end
+  end
+
+  defp command_assignment(
+         bind,
+         %{command: command_var, message: message_var},
+         command_name,
+         description
+       ) do
+    if :command in bind do
+      quote do
+        unquote(command_var) = %TelegramEx.Command{
+          command: unquote(command_name),
+          description: unquote(description),
+          message: unquote(message_var)
+        }
+      end
+    end
+  end
+
+  defp bindings(bind, vars) do
+    Enum.map(bind, &binding(&1, vars))
+  end
+
+  defp binding(name, vars) do
+    var = Macro.var(name, nil)
+    source = binding_source(name, vars)
+
+    quote do
+      var!(unquote(var)) = unquote(source)
+    end
+  end
+
+  defp binding_source(:message, %{message: message_var}), do: message_var
+  defp binding_source(:ctx, %{ctx: ctx_var}), do: ctx_var
+  defp binding_source(:args, %{args: args_var}), do: args_var
+  defp binding_source(:command, %{command: command_var}), do: command_var
+
+  defp binding_source(name, _vars) do
+    raise ArgumentError, "Unsupported bind variable: #{name}."
   end
 
   defp command_modules(module) do

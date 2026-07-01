@@ -9,7 +9,6 @@ defmodule TelegramEx.Builder.Photo do
   alias TelegramEx.API
   alias TelegramEx.Builder
   alias TelegramEx.Effect
-  alias TelegramEx.MimeType
 
   @type input :: map() | Effect.t()
 
@@ -28,25 +27,7 @@ defmodule TelegramEx.Builder.Photo do
   """
   @spec path(input(), String.t()) :: Effect.t()
   def path(input, path) do
-    input
-    |> Effect.wrap()
-    |> Effect.then(fn ctx ->
-      filename = Path.basename(path)
-
-      with {:ok, content} <- File.read(path) do
-        payload =
-          ctx
-          |> Map.get(:payload, %{})
-          |> Map.put(
-            :photo,
-            {content, filename: filename, content_type: MimeType.from_path(path)}
-          )
-
-        {:ok, Map.put(ctx, :payload, payload)}
-      else
-        {:error, reason} -> {:error, {:file, reason}}
-      end
-    end)
+    Builder.put_file_payload(input, :photo, path)
   end
 
   @doc """

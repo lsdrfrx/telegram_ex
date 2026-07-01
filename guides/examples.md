@@ -162,21 +162,33 @@ end
 
 Routers keep feature-specific commands, callbacks, and FSM states together.
 
-## Handling API Errors
+## Handling Builder Errors
 
 ```elixir
 case Message.send(ctx, chat_id) do
-  :ok ->
+  %TelegramEx.Effect{error: nil} ->
     :ok
 
-  {:error, %TelegramEx.Error{description: description}} ->
+  %TelegramEx.Effect{error: %TelegramEx.Error{description: description}} ->
     Logger.error("Telegram API error: #{description}")
 
-  {:error, reason} ->
+  %TelegramEx.Effect{error: reason} ->
     Logger.error("Request failed: #{inspect(reason)}")
 end
 ```
 
-Most examples return the `send/2` result directly, but explicit handling is
-useful for retries, logging, and user-facing fallback messages.
+Most examples return the effect from `send/2` directly, but explicit handling is
+useful for retries, logging, cleanup, and user-facing fallback messages.
 
+```elixir
+case Document.path(ctx, "/tmp/report.pdf") |> Document.send(chat_id) do
+  %TelegramEx.Effect{error: nil} ->
+    :ok
+
+  %TelegramEx.Effect{error: {:file, reason}} ->
+    Logger.error("Could not open report: #{inspect(reason)}")
+
+  %TelegramEx.Effect{error: reason} ->
+    Logger.error("Could not send report: #{inspect(reason)}")
+end
+```

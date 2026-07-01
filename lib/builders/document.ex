@@ -25,7 +25,7 @@ defmodule TelegramEx.Builder.Document do
 
   ## Returns
 
-  `TelegramEx.Effect` with the updated context.
+  `TelegramEx.Effect` with `:document` stored in the payload.
   """
   @spec url(input(), String.t()) :: Effect.t()
   def url(input, url) do
@@ -45,7 +45,8 @@ defmodule TelegramEx.Builder.Document do
 
   ## Returns
 
-  `TelegramEx.Effect` with the updated context or file-read error.
+  `TelegramEx.Effect` with `:document` stored in the payload, or a file-read
+  error.
   """
   @spec path(input(), String.t()) :: Effect.t()
   def path(input, path) do
@@ -65,7 +66,7 @@ defmodule TelegramEx.Builder.Document do
 
   ## Returns
 
-  `TelegramEx.Effect` with the updated context.
+  `TelegramEx.Effect` with `:caption` stored in the payload.
   """
   @spec caption(input(), String.t()) :: Effect.t()
   def caption(input, caption) do
@@ -86,7 +87,7 @@ defmodule TelegramEx.Builder.Document do
 
   ## Returns
 
-  `TelegramEx.Effect` with the updated context.
+  `TelegramEx.Effect` with `:caption` and `:parse_mode` stored in the payload.
   """
   @spec caption(input(), String.t(), String.t()) :: Effect.t()
   def caption(input, caption, parse_mode) do
@@ -107,7 +108,7 @@ defmodule TelegramEx.Builder.Document do
 
   ## Returns
 
-  `TelegramEx.Effect` with the updated context.
+  `TelegramEx.Effect` with `:disable_notification` stored in the payload.
   """
   @spec silent(input()) :: Effect.t()
   def silent(input) do

@@ -10,7 +10,8 @@ defmodule TelegramEx do
   - `:name` (required) - bot identifier used for config lookup and FSM storage
   - `:routers` (optional) - router modules tried before the bot module
 
-  See [Getting Started](getting-started.md) for setup and supervision examples.
+  See [Getting Started](getting-started.md) for setup and supervision examples,
+  and [Effects](effects.md) for builder pipeline error handling.
   """
 
   alias TelegramEx.Types
@@ -18,7 +19,7 @@ defmodule TelegramEx do
   @typedoc """
   Context map passed to all handlers.
 
-  Contains bot token, FSM state/data, and builder accumulator.
+  Contains bot token, FSM state/data, and builder request data.
   """
   @type context :: %{
           required(:token) => String.t(),
@@ -32,11 +33,15 @@ defmodule TelegramEx do
         }
 
   @typedoc """
-  Return value from handlers indicating state transitions.
+  Return value from handlers.
+
+  Builder pipelines return `TelegramEx.Effect` values. The server converts them
+  to ordinary handler results before applying FSM transitions or logging errors.
   """
   @type handler_result ::
           :ok
           | :pass
+          | TelegramEx.Effect.t()
           | {:transition, new_state :: atom()}
           | {:transition, new_state :: atom(), data :: term()}
           | {:stay, data :: term()}

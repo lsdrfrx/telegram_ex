@@ -59,6 +59,10 @@ end
 `use TelegramEx` imports the builder modules, command helpers, FSM helpers, and
 sets up the child spec used by the supervisor.
 
+The message pipelines above return `TelegramEx.Effect` values. For simple
+handlers you can return the pipeline directly; TelegramEx converts successful
+effects to `:ok` and logs failed effects as handler errors.
+
 ## 4. Start the Bot
 
 Add the bot module to your application supervision tree:
@@ -119,5 +123,5 @@ end
 ## Next Steps
 
 Read [Development Model](development.md) next if you want to understand how
-handlers, context, routers, and return values fit together.
-
+handlers, context, routers, and return values fit together. Read
+[Effects](effects.md) for the builder execution model and error handling.

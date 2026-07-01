@@ -113,13 +113,28 @@ ctx
 |> Message.send(chat_id)
 ```
 
-Each step returns an updated context until `send/2` turns it into an API
-request.
+Builder steps do not mutate the original map directly. They wrap the context in
+`TelegramEx.Effect`, store payload data inside that effect, and keep passing the
+effect through the pipeline. The final `send/2` step turns the accumulated
+context into a Telegram API request and stores any error in the effect.
+
+Most handlers do not need to manage effects manually. Returning the builder
+pipeline is enough; the server converts successful effects to `:ok` and failed
+effects to `{:error, reason}`. See [Effects](effects.md) for the detailed model.
 
 ## Return Values
 
-Most simple handlers can return the result of `send/2`, usually `:ok` or
-`{:error, reason}`.
+Most simple handlers return the effect produced by a builder pipeline:
+
+```elixir
+def handle_message(%{text: "/start", chat: chat}, ctx) do
+  ctx
+  |> Message.text("Welcome!")
+  |> Message.send(chat["id"])
+end
+```
+
+The server also accepts ordinary handler results.
 
 FSM-aware handlers can return transition values:
 
@@ -139,8 +154,8 @@ For each update, TelegramEx:
 3. builds the handler context
 4. tries routers in order
 5. tries the main bot module
-6. applies FSM transition return values
+6. converts effects to handler results
+7. applies FSM transition return values
 
 This keeps application code small: handlers describe behavior, while the server
 handles polling, parsing, context setup, and state persistence.
-

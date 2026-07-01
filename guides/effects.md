@@ -1,34 +1,20 @@
 # Effects
 
-TelegramEx builders return `TelegramEx.Effect`. An effect is a small execution
-container that carries the current handler context plus an optional error or
-result.
+`TelegramEx.Effect` is the execution value used by builders. It keeps the
+handler context and the first error produced by a builder step.
 
-The goal is to keep the familiar builder pipeline while making failures
-explicit and composable.
-
-## Why Effects Exist
-
-Some builder pipelines can fail before the Telegram API request is sent.
-
-For example:
+Most bot code does not create effects explicitly. A normal handler can still
+start with `ctx`:
 
 ```elixir
 ctx
-|> Document.path("/tmp/report.pdf")
-|> Document.caption("Report")
-|> Document.send(chat_id)
+|> Message.text("Hello")
+|> Message.send(chat_id)
 ```
 
-There are two different failure points:
-
-- `Document.path/2` reads a local file and can fail with `{:file, reason}`
-- `Document.send/2` calls Telegram and can fail with an API error
-
-Without an effect, every builder has to choose between raising, returning
-`{:error, reason}`, or forcing callers to manually branch between every step.
-Effects let the chain continue structurally while skipping later transformations
-after the first error.
+The first builder wraps `ctx` into an effect. Every following builder receives
+that effect, updates it if it is successful, or leaves it unchanged if an error
+has already happened.
 
 ## Shape of an Effect
 
@@ -42,80 +28,187 @@ Conceptually, an effect looks like this:
 }
 ```
 
-- `:ctx` is the current handler context
-- `:error` stores the first failure in the chain
-- `:result` is reserved for handler-level results
+- `:ctx` stores the current builder context
+- `:error` stores the first failed step
+- `:result` is used when an effect needs to carry a handler result
 
-Most users do not need to construct effects manually. Builders call
-`Effect.wrap/1`, so a pipeline can still start with the ordinary handler `ctx`.
+The important rule is simple: successful effects keep moving through the
+pipeline; failed effects short-circuit later steps.
+
+## Wrapping Context
+
+`Effect.wrap/1` accepts either a context map or an existing effect:
 
 ```elixir
-ctx
-|> Message.text("Hello")
-|> Message.send(chat_id)
+ctx = %{token: "123:token", payload: %{}}
+
+effect = TelegramEx.Effect.wrap(ctx)
+
+%TelegramEx.Effect{
+  ctx: %{token: "123:token", payload: %{}},
+  error: nil,
+  result: nil
+} = effect
 ```
 
-The first builder lifts `ctx` into an effect. Every following builder receives
-and returns an effect.
+This is why builders can accept both `ctx` and an effect:
 
-## Payload Steps
+```elixir
+Message.text(ctx, "Hello")
+Message.silent(Message.text(ctx, "Hello"))
+```
 
-Payload-only builders use `Effect.map_ctx/2`. They run only when the effect has
-no error.
+Both calls return `TelegramEx.Effect`.
+
+## Updating Context
+
+Use `Effect.map_ctx/2` for steps that cannot fail. The function receives the
+current context and must return the new context.
+
+```elixir
+alias TelegramEx.Effect
+
+ctx = %{payload: %{}}
+
+effect =
+  ctx
+  |> Effect.wrap()
+  |> Effect.map_ctx(fn ctx ->
+    payload = Map.put(ctx.payload, :text, "Hello")
+    Map.put(ctx, :payload, payload)
+  end)
+
+%Effect{ctx: %{payload: %{text: "Hello"}}, error: nil} = effect
+```
+
+This is the mechanism behind payload-only builders such as `Message.text/2`,
+`Message.silent/1`, and `Document.caption/2`.
+
+## Running Fallible Steps
+
+Use `Effect.then/2` for steps that can fail. The function receives the current
+context and must return `{:ok, new_ctx}` or `{:error, reason}`.
+
+```elixir
+alias TelegramEx.Effect
+
+read_file = fn ctx ->
+  case File.read("/tmp/report.pdf") do
+    {:ok, content} ->
+      payload = Map.put(ctx.payload, :document, content)
+      {:ok, Map.put(ctx, :payload, payload)}
+
+    {:error, reason} ->
+      {:error, {:file, reason}}
+  end
+end
+
+effect =
+  %{payload: %{}}
+  |> Effect.wrap()
+  |> Effect.then(read_file)
+```
+
+If the file exists, `effect.ctx.payload.document` contains the file content. If
+the file cannot be read, `effect.error` is `{:file, reason}`.
+
+Unexpected return values are treated as errors:
+
+```elixir
+effect =
+  %{payload: %{}}
+  |> Effect.wrap()
+  |> Effect.then(fn ctx -> ctx end)
+
+%Effect{error: {:invalid_return_value, %{payload: %{}}}} = effect
+```
+
+This keeps builder internals strict: a fallible step must say whether it
+succeeded or failed.
+
+## Short-Circuiting
+
+After an error, `map_ctx/2` and `then/2` do not run their functions.
+
+```elixir
+alias TelegramEx.Effect
+
+effect =
+  %{payload: %{}}
+  |> Effect.wrap()
+  |> Effect.then(fn _ctx -> {:error, :missing_file} end)
+  |> Effect.map_ctx(fn _ctx ->
+    raise "this function is not called"
+  end)
+  |> Effect.then(fn _ctx ->
+    raise "this function is not called either"
+  end)
+
+%Effect{error: :missing_file} = effect
+```
+
+This is the core reason builders can stay pipeline-friendly. A local file step
+can fail, and later caption or send steps can remain in the code without adding
+manual branching between every builder call.
+
+## How Builders Use Effects
+
+Payload builders usually delegate to `TelegramEx.Builder.put_payload/3`:
+
+```elixir
+def text(input, text) do
+  TelegramEx.Builder.put_payload(input, :text, text)
+end
+```
+
+`put_payload/3` wraps the input and updates `ctx.payload` through
+`Effect.map_ctx/2`.
+
+File builders delegate to `TelegramEx.Builder.put_file_payload/3`:
+
+```elixir
+def path(input, path) do
+  TelegramEx.Builder.put_file_payload(input, :document, path)
+end
+```
+
+`put_file_payload/3` uses `Effect.then/2`, because reading from disk can fail.
+On failure it stores `{:file, reason}` in the effect.
+
+Send builders also use `Effect.then/2`, because Telegram API requests can fail:
+
+```elixir
+def send(input, chat_id) do
+  input
+  |> Effect.wrap()
+  |> Effect.then(fn ctx ->
+    new_ctx =
+      ctx
+      |> Map.put(:chat_id, chat_id)
+      |> Map.put(:method, "sendMessage")
+      |> Map.put(:format, :json)
+
+    case TelegramEx.API.request(new_ctx) do
+      :ok -> {:ok, new_ctx}
+      {:error, reason} -> {:error, reason}
+    end
+  end)
+end
+```
+
+So a full builder chain is just a sequence of context transformations and
+fallible steps inside one effect:
 
 ```elixir
 ctx
-|> Message.text("Hello")
+|> Message.text("Report is ready")
 |> Message.silent()
-```
-
-Internally these steps update `ctx.payload`. If an earlier step failed, they are
-skipped and the original error is preserved.
-
-## Fallible Steps
-
-Fallible builders use `Effect.then/2`. The function passed to `then/2` must
-return either:
-
-```elixir
-{:ok, new_ctx}
-{:error, reason}
-```
-
-Local file builders use this to report file errors:
-
-```elixir
-ctx
-|> Photo.path("/missing/photo.jpg")
-|> Photo.caption("This caption is skipped")
-|> Photo.send(chat_id)
-```
-
-If the file cannot be read, the effect error becomes:
-
-```elixir
-{:file, reason}
-```
-
-The caption and send steps do not run.
-
-## Sending Requests
-
-`send/2` functions are also effect-aware. They add request metadata to the
-context, call `TelegramEx.API.request/1`, and store any API error in the effect.
-
-```elixir
-ctx
-|> Message.text("Done")
 |> Message.send(chat_id)
 ```
 
-On success, the effect keeps the request context. On failure, the effect stores
-the API error.
+## Returning Effects
 
-## Returning Effects from Handlers
-
-Handlers may return effects directly:
+Handlers may return an effect directly:
 
 ```elixir
 def handle_message(%{text: "/start", chat: chat}, ctx) do
@@ -125,19 +218,27 @@ def handle_message(%{text: "/start", chat: chat}, ctx) do
 end
 ```
 
-`TelegramEx.Server` calls `Effect.to_result/1` before processing the handler
-result. This means:
+Before processing the handler result, the server calls `Effect.to_result/1`:
 
-- successful effects become `:ok`
-- failed effects become `{:error, reason}`
-- ordinary FSM return values still work
+```elixir
+Effect.to_result(%Effect{error: nil, result: nil})
+#=> :ok
 
-The server remains responsible for FSM transitions and logging handler errors.
+Effect.to_result(%Effect{error: {:file, :enoent}})
+#=> {:error, {:file, :enoent}}
 
-## Inspecting an Effect Explicitly
+Effect.to_result(:pass)
+#=> :pass
+```
 
-Most handlers can just return the effect. If you need explicit error handling,
-match on the effect:
+That means effect-based builder pipelines and ordinary handler returns share
+the same boundary. Successful sends become `:ok`; failed sends become
+`{:error, reason}`; FSM return values still work normally.
+
+## Explicit Handling
+
+Return the effect directly when the server should handle logging. Match on the
+effect when the handler needs custom behavior:
 
 ```elixir
 case Document.path(ctx, "/tmp/report.pdf") |> Document.send(chat_id) do
@@ -145,44 +246,12 @@ case Document.path(ctx, "/tmp/report.pdf") |> Document.send(chat_id) do
     :ok
 
   %TelegramEx.Effect{error: {:file, reason}} ->
-    Logger.error("Could not read file: #{inspect(reason)}")
+    Logger.error("Could not read report: #{inspect(reason)}")
 
   %TelegramEx.Effect{error: reason} ->
-    Logger.error("Could not send document: #{inspect(reason)}")
+    Logger.error("Could not send report: #{inspect(reason)}")
 end
 ```
 
-This is useful when a handler needs custom logging, retrying, cleanup, or a
-fallback message.
-
-## Effect Helpers
-
-`Effect.wrap/1`
-
-Converts a context map into an effect. If the input is already an effect, it is
-returned unchanged.
-
-`Effect.map_ctx/2`
-
-Transforms the context when the effect is successful. If the effect already has
-an error, it is returned unchanged.
-
-`Effect.then/2`
-
-Runs a fallible step when the effect is successful. The step must return
-`{:ok, ctx}` or `{:error, reason}`. Unexpected return values become
-`{:invalid_return_value, value}`.
-
-`Effect.to_result/1`
-
-Converts an effect back into a normal handler result for the server.
-
-## Builder Helpers
-
-`TelegramEx.Builder.put_payload/3` updates `ctx.payload` through an effect.
-
-`TelegramEx.Builder.put_file_payload/3` reads a local file, builds multipart
-payload metadata, and stores `{:file, reason}` if reading fails.
-
-These helpers keep individual builders small and consistent.
-
+Use explicit handling for retries, cleanup, fallback messages, or business
+logic that must run only after a successful builder pipeline.

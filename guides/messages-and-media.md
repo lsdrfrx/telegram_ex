@@ -139,6 +139,15 @@ ctx
 |> Video.send(chat_id)
 ```
 
+Voice message:
+
+```elixir
+ctx
+|> Voice.path("/tmp/message.ogg")
+|> Voice.duration(12)
+|> Voice.send(chat_id)
+```
+
 Poll:
 
 ```elixir

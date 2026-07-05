@@ -2,8 +2,8 @@ defmodule TelegramEx.MimeType do
   @moduledoc """
   Resolves MIME content types for local files based on their extension.
 
-  This is used by the file-based builders (`Photo`, `Video`, `Sticker`,
-  `Document`) so that uploaded media carries the correct `Content-Type`
+  This is used by the file-based builders (`Photo`, `Video`, `Voice`,
+  `Sticker`, `Document`) so that uploaded media carries the correct `Content-Type`
   header instead of a hardcoded value.
   """
 

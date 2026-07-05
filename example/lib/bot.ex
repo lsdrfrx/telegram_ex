@@ -10,9 +10,9 @@ defmodule Example.Bot do
       ["/help", "/text", "/markdown"],
       ["/html", "/keyboard", "/reply_kb"],
       ["/photo", "/document", "/sticker"],
-      ["/video", "/location", "/contact"],
-      ["/silent", "/admin", "/survey"],
-      ["/poll", "/quiz"],
+      ["/video", "/voice", "/location"],
+      ["/contact", "/silent", "/admin"],
+      ["/survey", "/poll", "/quiz"],
       ["/command_demo", "/echo hello"]
     ]
 
@@ -47,6 +47,7 @@ defmodule Example.Bot do
     /document — send a document (file)
     /sticker — send a sticker (file)
     /video — send a video (file)
+    /voice — send a voice message (URL)
 
     <b>Other</b>
     /location — send a location
@@ -185,6 +186,15 @@ defmodule Example.Bot do
     ctx
     |> Video.path("assets/video.mp4")
     |> Video.send(chat["id"])
+  end
+
+  # ── /voice ─────────────────────────────────────────────────────────
+  # Voice message from local OGG/Opus file
+  def handle_message(%{text: "/voice", chat: chat}, ctx) do
+    ctx
+    |> Voice.path("assets/voice.ogg")
+    |> Voice.caption("Voice message sent with `sendVoice`", "Markdown")
+    |> Voice.send(chat["id"])
   end
 
   # ── /location ──────────────────────────────────────────────────────

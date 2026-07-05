@@ -18,6 +18,7 @@ A demo bot that showcases every feature of the [TelegramEx](https://github.com/l
 | `/document`  | Document from local file              |
 | `/sticker`   | Sticker from local `.webp` file       |
 | `/video`     | Video from local file                 |
+| `/voice`     | Voice message from local OGG/Opus file |
 | `/location`  | Send geo coordinates (Paris)          |
 | `/contact`   | Send a contact card                   |
 | `/silent`    | Silent message (no notification)      |

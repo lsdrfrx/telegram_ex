@@ -10,7 +10,7 @@ Add `telegram_ex` to `mix.exs`:
 ```elixir
 def deps do
   [
-    {:telegram_ex, "~> 1.2.0"}
+    {:telegram_ex, "~> 1.3.0"}
   ]
 end
 ```

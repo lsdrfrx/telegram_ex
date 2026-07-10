@@ -14,7 +14,7 @@ Elixir library for building Telegram bots with a macro-based API.
 ```elixir
 def deps do
   [
-    {:telegram_ex, "~> 1.2.0"}
+    {:telegram_ex, "~> 1.3.0"}
   ]
 end
 ```

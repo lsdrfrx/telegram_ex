@@ -7,10 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## 1.3.0 - 10-07-2026
+
 ### Added
 
 - `defcommand` macro for defining commands with arguments and options
+- Automatic registration of commands via Telegram `setMyCommands`
 - `TelegramEx.Error` struct to describe API errors
+- `TelegramEx.Effect` for pipeline-friendly builders with short-circuiting errors
+- `TelegramEx.Builder.Voice` for sending voice messages by file ID, URL, or local file path
+- `TelegramEx.MimeType` for resolving uploaded file content types from extensions
+- `audio` and `reply_to_message` fields in `TelegramEx.Types.Message`
+- Detailed guides for commands, effects, examples, FSM, routers, media, development, and getting started
+- Contribution guidelines in `CONTRIBUTING.md`
+
+### Changed
+
+- Builders now accept either a raw handler context or an existing `TelegramEx.Effect`
+- File payload handling is shared through `TelegramEx.Builder.put_file_payload/3`
+- Local media uploads now use extension-based MIME types instead of hardcoded content types
+- API error responses are returned as structured `TelegramEx.Error` values
+
+### Fixed
+
+- Added a `from_map/1` clause for `nil` nested messages to avoid failures when optional reply messages are absent
+- Fixed Dialyzer issues in message conversion specs
 
 ## 1.2.1 - 18-05-2026
 

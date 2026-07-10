@@ -42,7 +42,7 @@ defmodule TelegramEx.Types.Message do
           audio: map() | nil,
           caption: String.t() | nil,
           message_thread_id: integer() | nil,
-          reply_to_message: map() | nil
+          reply_to_message: t() | nil
         }
 
   defstruct [
@@ -65,9 +65,10 @@ defmodule TelegramEx.Types.Message do
   @doc """
   Converts a raw Telegram API message map to a Message struct.
   """
+  @spec from_map(nil) :: nil
+  @spec from_map(map()) :: t()
   def from_map(nil), do: nil
 
-  @spec from_map(map()) :: t()
   def from_map(map) do
     %__MODULE__{
       message_id: map["message_id"],

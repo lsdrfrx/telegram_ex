@@ -6,11 +6,7 @@ defmodule TelegramEx.Builder.Poll do
   [Messages and Media](messages-and-media.md).
   """
 
-  alias TelegramEx.API
-  alias TelegramEx.Builder
-  alias TelegramEx.Effect
-
-  @type input :: map() | Effect.t()
+  use TelegramEx.Builder
 
   @spec poll(input(), String.t(), list(String.t())) :: Effect.t()
   def poll(input, question, options) do
@@ -59,11 +55,6 @@ defmodule TelegramEx.Builder.Poll do
   @spec close_date(input(), integer()) :: Effect.t()
   def close_date(input, timestamp) do
     Builder.put_payload(input, :close_date, timestamp)
-  end
-
-  @spec silent(input()) :: Effect.t()
-  def silent(input) do
-    Builder.put_payload(input, :disable_notification, true)
   end
 
   @spec send(input(), integer()) :: Effect.t()

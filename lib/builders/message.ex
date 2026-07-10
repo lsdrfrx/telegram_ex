@@ -6,11 +6,7 @@ defmodule TelegramEx.Builder.Message do
   `sendMessage` request. See [Messages and Media](messages-and-media.md).
   """
 
-  alias TelegramEx.API
-  alias TelegramEx.Builder
-  alias TelegramEx.Effect
-
-  @type input :: map() | Effect.t()
+  use TelegramEx.Builder
 
   @doc """
   Sets the text content of the message.
@@ -58,14 +54,6 @@ defmodule TelegramEx.Builder.Message do
   @spec remove_keyboard(input()) :: Effect.t()
   def remove_keyboard(input) do
     Builder.put_payload(input, :reply_markup, %{remove_keyboard: true})
-  end
-
-  @doc """
-  Sends the message without notification sound.
-  """
-  @spec silent(input()) :: Effect.t()
-  def silent(input) do
-    Builder.put_payload(input, :disable_notification, true)
   end
 
   @doc """

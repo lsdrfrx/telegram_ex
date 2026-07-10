@@ -51,4 +51,30 @@ defmodule TelegramEx.Builder do
     |> Map.put(key, file)
     |> then(&Map.put(ctx, :payload, &1))
   end
+
+  defmacro __using__(_opts) do
+    quote do
+      alias TelegramEx.{API, Builder, Effect}
+
+      @type input :: map() | Effect.t()
+
+      @doc """
+      Sends the message without notification sound.
+      """
+      @spec silent(input()) :: Effect.t()
+      def silent(input) do
+        Builder.put_payload(input, :disable_notification, true)
+      end
+
+      @doc """
+      Selects message to reply to.
+      """
+      @spec reply_to(input(), String.t()) :: Effect.t()
+      def reply_to(input, message_id) do
+        Builder.put_payload(input, :reply_parameters, %{message_id: message_id})
+      end
+
+      defoverridable silent: 1, reply_to: 2
+    end
+  end
 end

@@ -1,7 +1,11 @@
 defmodule Example.Bot do
   use TelegramEx,
     name: :example_bot,
-    routers: [Example.Routers.Commands, Example.Routers.Admin, Example.Routers.Survey]
+    routers: [
+      Example.Routers.Commands,
+      Example.Routers.Admin,
+      Example.Routers.Survey
+    ]
 
   # ── /start ─────────────────────────────────────────────────────────
   # Reply keyboard with all available commands
@@ -11,9 +15,9 @@ defmodule Example.Bot do
       ["/html", "/keyboard", "/reply_kb"],
       ["/photo", "/document", "/sticker"],
       ["/video", "/voice", "/location"],
-      ["/contact", "/silent", "/admin"],
+      ["/contact", "/silent", "/reply_to"],
       ["/survey", "/poll", "/quiz"],
-      ["/command_demo", "/echo hello"]
+      ["/admin", "/command_demo", "/echo hello"]
     ]
 
     ctx
@@ -36,6 +40,7 @@ defmodule Example.Bot do
     /markdown — Markdown formatted message
     /html — HTML formatted message
     /silent — message without notification
+    /reply_to — reply to the command message
 
     <b>Keyboards</b>
     /keyboard — inline keyboard with callbacks
@@ -216,6 +221,20 @@ defmodule Example.Bot do
     ctx
     |> Message.text("This message was sent silently (no notification).")
     |> Message.silent()
+    |> Message.send(chat["id"])
+  end
+
+  # ── /reply_to ──────────────────────────────────────────────────────
+  def handle_message(%{text: "/reply_to", chat: chat, message_id: message_id}, ctx) do
+    ctx
+    |> Message.text("This message replies to your /reply_to command.")
+    |> Message.reply_to(message_id)
+    |> Message.send(chat["id"])
+  end
+
+  def handle_message(%{chat: chat, reply: %{text: text}}, ctx) do
+    ctx
+    |> Message.text("You replied to message with text:\n#{text}")
     |> Message.send(chat["id"])
   end
 

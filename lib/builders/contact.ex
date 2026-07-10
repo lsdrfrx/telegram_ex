@@ -6,11 +6,7 @@ defmodule TelegramEx.Builder.Contact do
   [Messages and Media](messages-and-media.md).
   """
 
-  alias TelegramEx.API
-  alias TelegramEx.Builder
-  alias TelegramEx.Effect
-
-  @type input :: map() | Effect.t()
+  use TelegramEx.Builder
 
   @doc """
   Sets contact information with first name and phone number.
@@ -31,14 +27,6 @@ defmodule TelegramEx.Builder.Contact do
     |> Builder.put_payload(:phone_number, phone)
     |> Builder.put_payload(:first_name, first_name)
     |> Builder.put_payload(:last_name, last_name)
-  end
-
-  @doc """
-  Sends the contact without notification sound.
-  """
-  @spec silent(input()) :: Effect.t()
-  def silent(input) do
-    Builder.put_payload(input, :disable_notification, true)
   end
 
   @doc """

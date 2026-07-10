@@ -42,7 +42,7 @@ defmodule TelegramEx.Types.Message do
           audio: map() | nil,
           caption: String.t() | nil,
           message_thread_id: integer() | nil,
-          reply_to_message: t() | nil
+          reply: t() | nil
         }
 
   defstruct [
@@ -59,7 +59,7 @@ defmodule TelegramEx.Types.Message do
     :voice,
     :caption,
     :message_thread_id,
-    :reply_to_message
+    :reply
   ]
 
   @doc """
@@ -83,7 +83,7 @@ defmodule TelegramEx.Types.Message do
       video: map["video"],
       voice: map["voice"],
       caption: map["caption"],
-      reply_to_message: Message.from_map(map["reply_to_message"])
+      reply: Message.from_map(map["reply_to_message"])
     }
   end
 end

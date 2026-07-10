@@ -6,11 +6,7 @@ defmodule TelegramEx.Builder.Video do
   sends. See [Messages and Media](messages-and-media.md).
   """
 
-  alias TelegramEx.API
-  alias TelegramEx.Builder
-  alias TelegramEx.Effect
-
-  @type input :: map() | Effect.t()
+  use TelegramEx.Builder
 
   @doc """
   Sets the video by Telegram file ID.
@@ -62,14 +58,6 @@ defmodule TelegramEx.Builder.Video do
   @spec cover_url(input(), String.t()) :: Effect.t()
   def cover_url(input, url) do
     Builder.put_payload(input, :cover, url)
-  end
-
-  @doc """
-  Sends the video without notification sound.
-  """
-  @spec silent(input()) :: Effect.t()
-  def silent(input) do
-    Builder.put_payload(input, :disable_notification, true)
   end
 
   @doc """

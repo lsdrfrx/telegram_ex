@@ -6,11 +6,7 @@ defmodule TelegramEx.Builder.Location do
   [Messages and Media](messages-and-media.md).
   """
 
-  alias TelegramEx.API
-  alias TelegramEx.Builder
-  alias TelegramEx.Effect
-
-  @type input :: map() | Effect.t()
+  use TelegramEx.Builder
 
   @doc """
   Sets the geographic coordinates.
@@ -20,14 +16,6 @@ defmodule TelegramEx.Builder.Location do
     input
     |> Builder.put_payload(:latitude, lat)
     |> Builder.put_payload(:longitude, lng)
-  end
-
-  @doc """
-  Sends the location without notification sound.
-  """
-  @spec silent(input()) :: Effect.t()
-  def silent(input) do
-    Builder.put_payload(input, :disable_notification, true)
   end
 
   @doc """

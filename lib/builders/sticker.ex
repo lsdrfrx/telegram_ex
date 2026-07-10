@@ -6,11 +6,7 @@ defmodule TelegramEx.Builder.Sticker do
   [Messages and Media](messages-and-media.md).
   """
 
-  alias TelegramEx.API
-  alias TelegramEx.Builder
-  alias TelegramEx.Effect
-
-  @type input :: map() | Effect.t()
+  use TelegramEx.Builder
 
   @doc """
   Sets the sticker by Telegram file ID.
@@ -36,14 +32,6 @@ defmodule TelegramEx.Builder.Sticker do
   @spec path(input(), String.t()) :: Effect.t()
   def path(input, path) do
     Builder.put_file_payload(input, :sticker, path)
-  end
-
-  @doc """
-  Sends the sticker without notification sound.
-  """
-  @spec silent(input()) :: Effect.t()
-  def silent(input) do
-    Builder.put_payload(input, :disable_notification, true)
   end
 
   @doc """

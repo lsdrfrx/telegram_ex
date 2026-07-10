@@ -6,11 +6,7 @@ defmodule TelegramEx.Builder.Voice do
   duration, and silent sends. See [Messages and Media](messages-and-media.md).
   """
 
-  alias TelegramEx.API
-  alias TelegramEx.Builder
-  alias TelegramEx.Effect
-
-  @type input :: map() | Effect.t()
+  use TelegramEx.Builder
 
   @doc """
   Sets the voice message by Telegram file ID.
@@ -62,14 +58,6 @@ defmodule TelegramEx.Builder.Voice do
   @spec duration(input(), integer()) :: Effect.t()
   def duration(input, seconds) do
     Builder.put_payload(input, :duration, seconds)
-  end
-
-  @doc """
-  Sends the voice message without notification sound.
-  """
-  @spec silent(input()) :: Effect.t()
-  def silent(input) do
-    Builder.put_payload(input, :disable_notification, true)
   end
 
   @doc """

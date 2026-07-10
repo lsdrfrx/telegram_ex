@@ -6,11 +6,7 @@ defmodule TelegramEx.Builder.Document do
   [Messages and Media](messages-and-media.md).
   """
 
-  alias TelegramEx.API
-  alias TelegramEx.Builder
-  alias TelegramEx.Effect
-
-  @type input :: map() | Effect.t()
+  use TelegramEx.Builder
 
   @doc """
   Sets the document from a URL.
@@ -94,25 +90,6 @@ defmodule TelegramEx.Builder.Document do
     input
     |> Builder.put_payload(:caption, caption)
     |> Builder.put_payload(:parse_mode, parse_mode)
-  end
-
-  @doc """
-  Sends the document without notification sound.
-
-  Accepts a handler context or an existing `TelegramEx.Effect` and returns an
-  effect with `:disable_notification` stored in the payload.
-
-  ## Parameters
-
-  - `input` - Context map or effect
-
-  ## Returns
-
-  `TelegramEx.Effect` with `:disable_notification` stored in the payload.
-  """
-  @spec silent(input()) :: Effect.t()
-  def silent(input) do
-    Builder.put_payload(input, :disable_notification, true)
   end
 
   @doc """

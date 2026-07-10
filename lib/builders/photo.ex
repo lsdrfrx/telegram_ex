@@ -6,11 +6,7 @@ defmodule TelegramEx.Builder.Photo do
   [Messages and Media](messages-and-media.md).
   """
 
-  alias TelegramEx.API
-  alias TelegramEx.Builder
-  alias TelegramEx.Effect
-
-  @type input :: map() | Effect.t()
+  use TelegramEx.Builder
 
   @doc """
   Sets the photo from a URL.
@@ -46,14 +42,6 @@ defmodule TelegramEx.Builder.Photo do
     input
     |> Builder.put_payload(:caption, caption)
     |> Builder.put_payload(:parse_mode, parse_mode)
-  end
-
-  @doc """
-  Sends the photo without notification sound.
-  """
-  @spec silent(input()) :: Effect.t()
-  def silent(input) do
-    Builder.put_payload(input, :disable_notification, true)
   end
 
   @doc """

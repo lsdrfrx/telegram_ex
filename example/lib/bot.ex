@@ -26,7 +26,7 @@ defmodule Example.Bot do
       "Markdown"
     )
     |> Message.reply_keyboard(keyboard, resize_keyboard: true)
-    |> Message.send(chat["id"])
+    |> Message.send(chat.id)
   end
 
   # ── /help ──────────────────────────────────────────────────────────
@@ -69,21 +69,21 @@ defmodule Example.Bot do
 
     ctx
     |> Message.text(help, "HTML")
-    |> Message.send(chat["id"])
+    |> Message.send(chat.id)
   end
 
   def handle_message(%{text: "/clear", chat: chat}, ctx) do
     ctx
     |> Message.text("Reply keyboard cleared.")
     |> Message.remove_keyboard()
-    |> Message.send(chat["id"])
+    |> Message.send(chat.id)
   end
 
   # ── /text ──────────────────────────────────────────────────────────
   def handle_message(%{text: "/text", chat: chat}, ctx) do
     ctx
     |> Message.text("This is a plain text message without any formatting.")
-    |> Message.send(chat["id"])
+    |> Message.send(chat.id)
   end
 
   # ── /markdown ──────────────────────────────────────────────────────
@@ -100,7 +100,7 @@ defmodule Example.Bot do
 
     ctx
     |> Message.text(md, "Markdown")
-    |> Message.send(chat["id"])
+    |> Message.send(chat.id)
   end
 
   # ── /html ──────────────────────────────────────────────────────────
@@ -113,7 +113,7 @@ defmodule Example.Bot do
 
     ctx
     |> Message.text(html, "HTML")
-    |> Message.send(chat["id"])
+    |> Message.send(chat.id)
   end
 
   # ── /keyboard ──────────────────────────────────────────────────────
@@ -133,7 +133,7 @@ defmodule Example.Bot do
     ctx
     |> Message.text("Inline keyboard demo. Press a button:")
     |> Message.inline_keyboard(keyboard)
-    |> Message.send(chat["id"])
+    |> Message.send(chat.id)
   end
 
   # ── /reply_kb ──────────────────────────────────────────────────────
@@ -148,7 +148,7 @@ defmodule Example.Bot do
     ctx
     |> Message.text("Reply keyboard demo. Choose an option or remove it:")
     |> Message.reply_keyboard(keyboard, resize_keyboard: true, one_time_keyboard: true)
-    |> Message.send(chat["id"])
+    |> Message.send(chat.id)
   end
 
   # ── /remove_kb ─────────────────────────────────────────────────────
@@ -156,7 +156,7 @@ defmodule Example.Bot do
     ctx
     |> Message.text("Reply keyboard removed.")
     |> Message.remove_keyboard()
-    |> Message.send(chat["id"])
+    |> Message.send(chat.id)
   end
 
   # ── /photo ─────────────────────────────────────────────────────────
@@ -165,7 +165,7 @@ defmodule Example.Bot do
     ctx
     |> Photo.url("https://picsum.photos/600/400")
     |> Photo.caption("Random photo via *picsum.photos*", "Markdown")
-    |> Photo.send(chat["id"])
+    |> Photo.send(chat.id)
   end
 
   # ── /document ──────────────────────────────────────────────────────
@@ -174,7 +174,7 @@ defmodule Example.Bot do
     ctx
     |> Document.path("mix.exs")
     |> Document.caption("This bot's `mix.exs` sent as a document", "Markdown")
-    |> Document.send(chat["id"])
+    |> Document.send(chat.id)
   end
 
   # ── /sticker ───────────────────────────────────────────────────────
@@ -182,7 +182,7 @@ defmodule Example.Bot do
   def handle_message(%{text: "/sticker", chat: chat}, ctx) do
     ctx
     |> Sticker.path("assets/sticker.webp")
-    |> Sticker.send(chat["id"])
+    |> Sticker.send(chat.id)
   end
 
   # ── /video ─────────────────────────────────────────────────────────
@@ -190,7 +190,7 @@ defmodule Example.Bot do
   def handle_message(%{text: "/video", chat: chat}, ctx) do
     ctx
     |> Video.path("assets/video.mp4")
-    |> Video.send(chat["id"])
+    |> Video.send(chat.id)
   end
 
   # ── /voice ─────────────────────────────────────────────────────────
@@ -199,21 +199,21 @@ defmodule Example.Bot do
     ctx
     |> Voice.path("assets/voice.ogg")
     |> Voice.caption("Voice message sent with `sendVoice`", "Markdown")
-    |> Voice.send(chat["id"])
+    |> Voice.send(chat.id)
   end
 
   # ── /location ──────────────────────────────────────────────────────
   def handle_message(%{text: "/location", chat: chat}, ctx) do
     ctx
     |> Location.coordinates(48.8566, 2.3522)
-    |> Location.send(chat["id"])
+    |> Location.send(chat.id)
   end
 
   # ── /contact ───────────────────────────────────────────────────────
   def handle_message(%{text: "/contact", chat: chat}, ctx) do
     ctx
     |> Contact.contact("Telegram", "Ex", "+10000000000")
-    |> Contact.send(chat["id"])
+    |> Contact.send(chat.id)
   end
 
   # ── /silent ────────────────────────────────────────────────────────
@@ -221,7 +221,7 @@ defmodule Example.Bot do
     ctx
     |> Message.text("This message was sent silently (no notification).")
     |> Message.silent()
-    |> Message.send(chat["id"])
+    |> Message.send(chat.id)
   end
 
   # ── /reply_to ──────────────────────────────────────────────────────
@@ -229,13 +229,13 @@ defmodule Example.Bot do
     ctx
     |> Message.text("This message replies to your /reply_to command.")
     |> Message.reply_to(message_id)
-    |> Message.send(chat["id"])
+    |> Message.send(chat.id)
   end
 
   def handle_message(%{chat: chat, reply: %{text: text}}, ctx) do
     ctx
     |> Message.text("You replied to message with text:\n#{text}")
-    |> Message.send(chat["id"])
+    |> Message.send(chat.id)
   end
 
   # ── /admin ─────────────────────────────────────────────────────────
@@ -246,7 +246,7 @@ defmodule Example.Bot do
       "Entering *admin mode*.\nAny text will be echoed as an admin command.\nSend /exit to leave.",
       "Markdown"
     )
-    |> Message.send(chat["id"])
+    |> Message.send(chat.id)
 
     {:transition, :admin}
   end
@@ -256,7 +256,7 @@ defmodule Example.Bot do
   def handle_message(%{text: "/survey", chat: chat}, ctx) do
     ctx
     |> Message.text("*Survey started!*\n\nWhat is your name?", "Markdown")
-    |> Message.send(chat["id"])
+    |> Message.send(chat.id)
 
     {:transition, :survey_name, %{}}
   end
@@ -267,14 +267,14 @@ defmodule Example.Bot do
     ctx
     |> Message.text("👍 You liked it!")
     |> Message.answer_callback_query(cb)
-    |> Message.send(chat["id"])
+    |> Message.send(chat.id)
   end
 
   def handle_callback(%{data: "vote_dislike", message: %{chat: chat}} = cb, ctx) do
     ctx
     |> Message.text("👎 You disliked it!")
     |> Message.answer_callback_query(cb)
-    |> Message.send(chat["id"])
+    |> Message.send(chat.id)
   end
 
   def handle_callback(%{data: "info", message: %{chat: chat}} = cb, ctx) do
@@ -283,14 +283,14 @@ defmodule Example.Bot do
       "ℹ️ This bot demonstrates all TelegramEx features:\nBuilders, keyboards, FSM, routers, callbacks."
     )
     |> Message.answer_callback_query(cb)
-    |> Message.send(chat["id"])
+    |> Message.send(chat.id)
   end
 
   def handle_callback(%{data: "cancel", message: %{chat: chat}} = cb, ctx) do
     ctx
     |> Message.text("❌ Action cancelled.")
     |> Message.answer_callback_query(cb)
-    |> Message.send(chat["id"])
+    |> Message.send(chat.id)
   end
 
   # ── Reply keyboard echo ───────────────────────────────────────────
@@ -298,7 +298,7 @@ defmodule Example.Bot do
       when letter in ["A", "B", "C"] do
     ctx
     |> Message.text("You selected: *Option #{letter}*", "Markdown")
-    |> Message.send(chat["id"])
+    |> Message.send(chat.id)
   end
 
   # ── /poll ──────────────────────────────────────────────────────────
@@ -314,7 +314,7 @@ defmodule Example.Bot do
     |> Poll.multiple_answers(true)
     |> Poll.anonymous(true)
     |> Poll.open_period(120)
-    |> Poll.send(chat["id"])
+    |> Poll.send(chat.id)
   end
 
   # ── /quiz ──────────────────────────────────────────────────────────
@@ -330,6 +330,6 @@ defmodule Example.Bot do
       "Correct! *Paris* is the capital of France.\nThe Eiffel Tower is located there.",
       "Markdown"
     )
-    |> Poll.send(chat["id"])
+    |> Poll.send(chat.id)
   end
 end

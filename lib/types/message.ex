@@ -4,7 +4,7 @@ defmodule TelegramEx.Types.Message do
 
   Contains incoming message fields used by handlers.
 
-  ## Fields
+  ##Fields
 
   - `:message_id` - Unique message identifier
   - `:from` - Sender information (map with string keys)
@@ -21,7 +21,7 @@ defmodule TelegramEx.Types.Message do
 
   """
 
-  alias TelegramEx.Types.Message
+  alias TelegramEx.Types.{Chat, Message}
 
   @typedoc """
   Message struct type.
@@ -31,7 +31,7 @@ defmodule TelegramEx.Types.Message do
   @type t :: %__MODULE__{
           message_id: integer(),
           from: map(),
-          chat: map(),
+          chat: Chat.t(),
           date: integer(),
           text: String.t() | nil,
           photo: list(map()) | nil,
@@ -74,7 +74,7 @@ defmodule TelegramEx.Types.Message do
       message_id: map["message_id"],
       message_thread_id: map["message_thread_id"],
       from: map["from"],
-      chat: map["chat"],
+      chat: Chat.from_map(map["chat"]),
       date: map["date"],
       text: Map.get(map, "text", ""),
       photo: map["photo"],

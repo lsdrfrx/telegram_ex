@@ -161,8 +161,8 @@ defmodule TelegramEx.Server do
   end
 
   @spec get_chat_id(Types.Message.t() | Types.CallbackQuery.t()) :: chat_id()
-  defp get_chat_id(%Types.CallbackQuery{message: %{chat: chat}}), do: chat["id"]
-  defp get_chat_id(%Types.Message{chat: chat}), do: chat["id"]
+  defp get_chat_id(%Types.CallbackQuery{message: %{chat: chat}}), do: chat.id
+  defp get_chat_id(%Types.Message{chat: chat}), do: chat.id
 
   @spec parse_message(map()) :: Types.Message.t()
   defp parse_message(message) when is_map(message), do: Types.Message.from_map(message)

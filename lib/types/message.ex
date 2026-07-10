@@ -21,6 +21,8 @@ defmodule TelegramEx.Types.Message do
 
   """
 
+  alias TelegramEx.Types.Message
+
   @typedoc """
   Message struct type.
 
@@ -37,8 +39,10 @@ defmodule TelegramEx.Types.Message do
           sticker: map() | nil,
           video: map() | nil,
           voice: map() | nil,
+          audio: map() | nil,
           caption: String.t() | nil,
-          message_thread_id: integer() | nil
+          message_thread_id: integer() | nil,
+          reply_to_message: map() | nil
         }
 
   defstruct [
@@ -51,14 +55,18 @@ defmodule TelegramEx.Types.Message do
     :document,
     :sticker,
     :video,
+    :audio,
     :voice,
     :caption,
-    :message_thread_id
+    :message_thread_id,
+    :reply_to_message
   ]
 
   @doc """
   Converts a raw Telegram API message map to a Message struct.
   """
+  def from_map(nil), do: nil
+
   @spec from_map(map()) :: t()
   def from_map(map) do
     %__MODULE__{
@@ -73,7 +81,8 @@ defmodule TelegramEx.Types.Message do
       sticker: map["sticker"],
       video: map["video"],
       voice: map["voice"],
-      caption: map["caption"]
+      caption: map["caption"],
+      reply_to_message: Message.from_map(map["reply_to_message"])
     }
   end
 end

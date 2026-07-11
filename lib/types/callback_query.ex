@@ -18,6 +18,7 @@ defmodule TelegramEx.Types.CallbackQuery do
 
   """
 
+  alias TelegramEx.Types
   alias TelegramEx.Types.Message
 
   @typedoc """
@@ -28,11 +29,11 @@ defmodule TelegramEx.Types.CallbackQuery do
   @type t() :: %__MODULE__{
           id: String.t(),
           from: map(),
-          message: Message.t() | nil,
-          inline_message_id: String.t() | nil,
           chat_instance: String.t(),
           data: String.t(),
-          message_thread_id: integer() | nil
+          message: Types.nullable(Message.t()),
+          message_thread_id: Types.nullable(integer()),
+          inline_message_id: Types.nullable(String.t())
         }
 
   defstruct [
@@ -53,11 +54,11 @@ defmodule TelegramEx.Types.CallbackQuery do
     %__MODULE__{
       id: map["id"],
       from: map["from"],
-      message: Message.from_map(map["message"]),
       inline_message_id: map["inline_message_id"],
       chat_instance: map["chat_instance"],
       data: map["data"],
-      message_thread_id: map["message_thread_id"]
+      message_thread_id: map["message_thread_id"],
+      message: Types.map(Message, map["message"])
     }
   end
 end

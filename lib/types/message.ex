@@ -21,6 +21,7 @@ defmodule TelegramEx.Types.Message do
 
   """
 
+  alias TelegramEx.Types
   alias TelegramEx.Types.{Chat, Message}
 
   @typedoc """
@@ -33,16 +34,16 @@ defmodule TelegramEx.Types.Message do
           from: map(),
           chat: Chat.t(),
           date: integer(),
-          text: String.t() | nil,
-          photo: list(map()) | nil,
-          document: map() | nil,
-          sticker: map() | nil,
-          video: map() | nil,
-          voice: map() | nil,
-          audio: map() | nil,
-          caption: String.t() | nil,
-          message_thread_id: integer() | nil,
-          reply: t() | nil
+          text: Types.nullable(String.t()),
+          photo: Types.nullable(list(map())),
+          document: Types.nullable(map()),
+          sticker: Types.nullable(map()),
+          video: Types.nullable(map()),
+          voice: Types.nullable(map()),
+          audio: Types.nullable(map()),
+          caption: Types.nullable(String.t()),
+          message_thread_id: Types.nullable(integer()),
+          reply: Types.nullable(t())
         }
 
   defstruct [
@@ -74,16 +75,16 @@ defmodule TelegramEx.Types.Message do
       message_id: map["message_id"],
       message_thread_id: map["message_thread_id"],
       from: map["from"],
-      chat: Chat.from_map(map["chat"]),
       date: map["date"],
-      text: Map.get(map, "text", ""),
+      text: map["text"] || nil,
       photo: map["photo"],
       document: map["document"],
       sticker: map["sticker"],
       video: map["video"],
       voice: map["voice"],
       caption: map["caption"],
-      reply: Message.from_map(map["reply_to_message"])
+      chat: Types.map(Chat, map["chat"]),
+      reply: Types.map(Message, map["reply_to_message"])
     }
   end
 end

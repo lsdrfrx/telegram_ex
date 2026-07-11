@@ -18,6 +18,8 @@ defmodule TelegramEx.Types.Chat do
 
   """
 
+  alias TelegramEx.Types
+
   @typedoc """
   Chat struct type.
 
@@ -26,12 +28,12 @@ defmodule TelegramEx.Types.Chat do
   @type t :: %__MODULE__{
           id: integer(),
           type: String.t(),
-          title: String.t() | nil,
-          username: String.t() | nil,
-          first_name: String.t() | nil,
-          last_name: String.t() | nil,
-          is_forum: true | nil,
-          is_direct_messages: true | nil
+          title: Types.nullable(String.t()),
+          username: Types.nullable(String.t()),
+          first_name: Types.nullable(String.t()),
+          last_name: Types.nullable(String.t()),
+          is_forum: Types.nullable(true),
+          is_direct_messages: Types.nullable(true)
         }
 
   defstruct [

@@ -9,6 +9,7 @@ defmodule TelegramEx.Server do
   use GenServer
   require Logger
   alias TelegramEx.{API, Command, Config, Effect, FSM, Types}
+  alias TelegramEx.Types.{CallbackQuery, Message}
 
   @type chat_id :: TelegramEx.Types.chat_id()
 
@@ -105,7 +106,7 @@ defmodule TelegramEx.Server do
   end
 
   @spec run_handler(
-          Types.Message.t() | Types.CallbackQuery.t(),
+          Message.t() | CallbackQuery.t(),
           module(),
           atom(),
           String.t(),
@@ -160,13 +161,13 @@ defmodule TelegramEx.Server do
     end
   end
 
-  @spec get_chat_id(Types.Message.t() | Types.CallbackQuery.t()) :: chat_id()
-  defp get_chat_id(%Types.CallbackQuery{message: %{chat: chat}}), do: chat["id"]
-  defp get_chat_id(%Types.Message{chat: chat}), do: chat["id"]
+  @spec get_chat_id(Message.t() | CallbackQuery.t()) :: chat_id()
+  defp get_chat_id(%CallbackQuery{message: %{chat: chat}}), do: chat.id
+  defp get_chat_id(%Message{chat: chat}), do: chat.id
 
-  @spec parse_message(map()) :: Types.Message.t()
+  @spec parse_message(map()) :: Message.t()
   defp parse_message(message) when is_map(message), do: Types.Message.from_map(message)
 
-  @spec parse_callback_query(map()) :: Types.CallbackQuery.t()
-  defp parse_callback_query(callback_query), do: Types.CallbackQuery.from_map(callback_query)
+  @spec parse_callback_query(map()) :: CallbackQuery.t()
+  defp parse_callback_query(callback_query), do: CallbackQuery.from_map(callback_query)
 end

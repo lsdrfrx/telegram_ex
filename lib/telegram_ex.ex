@@ -72,7 +72,10 @@ defmodule TelegramEx do
       import TelegramEx
       import TelegramEx.FSM, only: [defstate: 2]
       import TelegramEx.Command, only: [defcommand: 3]
-      alias TelegramEx.{API, Config, FSM}
+      alias TelegramEx.{API, Config, Effect, FSM}
+
+      import TelegramEx.Effect, only: [on_error: 3, recover: 3, recover_with: 3]
+      require TelegramEx.Effect
 
       alias TelegramEx.Builder.{
         Contact,

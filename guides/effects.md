@@ -237,21 +237,86 @@ the same boundary. Successful sends become `:ok`; failed sends become
 
 ## Explicit Handling
 
-Return the effect directly when the server should handle logging. Match on the
-effect when the handler needs custom behavior:
+Return the effect directly when the server should handle logging. Use
+`on_error/3` when the handler needs custom behavior at the end of a pipeline:
+
+Modules that `use TelegramEx` can call `on_error/3`, `recover/3`, and
+`recover_with/3` directly. If you call them through `TelegramEx.Effect`, require
+the module first. The examples below assume this setup:
 
 ```elixir
-case Document.path(ctx, "/tmp/report.pdf") |> Document.send(chat_id) do
-  %TelegramEx.Effect{error: nil} ->
-    :ok
+alias TelegramEx.Effect
+require Effect
 
-  %TelegramEx.Effect{error: {:file, reason}} ->
-    Logger.error("Could not read report: #{inspect(reason)}")
-
-  %TelegramEx.Effect{error: reason} ->
-    Logger.error("Could not send report: #{inspect(reason)}")
-end
+ctx
+|> Document.path("/tmp/monthly-report.pdf")
+|> Document.caption("Monthly report")
+|> Document.send(chat_id)
+|> Effect.on_error({:file, _reason}, fn effect ->
+  Logger.error("Could not read report for #{effect.ctx.chat_id}: #{inspect(effect.error)}")
+end)
 ```
 
-Use explicit handling for retries, cleanup, fallback messages, or business
-logic that must run only after a successful builder pipeline.
+`on_error/3` returns the same effect unchanged. The callback is a side effect:
+use it for logging, metrics, cleanup, or a fallback action that should not
+replace the current effect. The callback may accept either no arguments or the
+current effect.
+
+The second argument is a pattern matched against the stored error. This lets a
+handler react to one class of errors and leave the rest to the normal handler
+result boundary:
+
+```elixir
+ctx
+|> Document.path("/tmp/monthly-report.pdf")
+|> Document.caption("Monthly report")
+|> Document.send(chat_id)
+|> Effect.on_error({:file, _reason}, fn effect ->
+  Logger.error("File error: #{inspect(effect.error)}")
+end)
+|> Effect.on_error(%TelegramEx.Error{}, fn effect ->
+  Logger.error("Telegram API error: #{inspect(effect.error)}")
+end)
+```
+
+## Recovery
+
+Use `recover/3` or `recover_with/3` when a failed effect should continue in the
+middle of a pipeline.
+
+`recover/3` clears a matching error and keeps the current context:
+
+```elixir
+ctx
+|> Message.text("Profile updated.")
+|> Effect.then(fn ctx ->
+  case write_audit_log(ctx) do
+    :ok -> {:ok, ctx}
+    {:error, reason} -> {:error, {:audit_log, reason}}
+  end
+end)
+|> Effect.recover({:audit_log, _reason}, fn effect ->
+  Logger.warning("Audit log failed: #{inspect(effect.error)}")
+  :ok
+end)
+|> Message.send(chat_id)
+```
+
+Use `recover_with/3` when recovery needs to replace the context:
+
+```elixir
+fallback_url = "https://example.com/reports/monthly.pdf"
+
+ctx
+|> Document.path("/tmp/monthly-report.pdf")
+|> Effect.recover_with({:file, :enoent}, fn effect ->
+  payload = Map.put(Map.get(effect.ctx, :payload, %{}), :document, fallback_url)
+  {:ok, Map.put(effect.ctx, :payload, payload)}
+end)
+|> Document.caption("Monthly report")
+|> Document.send(chat_id)
+```
+
+If the recovery function returns `{:error, reason}`, the effect remains failed
+with the new reason. Unexpected return values are stored as
+`{:invalid_return_value, value}`.

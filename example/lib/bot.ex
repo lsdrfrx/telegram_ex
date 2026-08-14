@@ -13,7 +13,7 @@ defmodule Example.Bot do
     keyboard = [
       ["/help", "/text", "/markdown"],
       ["/html", "/keyboard", "/reply_kb"],
-      ["/photo", "/document", "/sticker"],
+      ["/photo", "/document", "/effects", "/sticker"],
       ["/video", "/voice", "/location"],
       ["/contact", "/silent", "/reply_to"],
       ["/survey", "/poll", "/quiz"],
@@ -50,6 +50,7 @@ defmodule Example.Bot do
     <b>Media</b>
     /photo — send a photo (URL)
     /document — send a document (file)
+    /effects — recover from a missing document
     /sticker — send a sticker (file)
     /video — send a video (file)
     /voice — send a voice message (URL)
@@ -175,6 +176,25 @@ defmodule Example.Bot do
     |> Document.path("mix.exs")
     |> Document.caption("This bot's `mix.exs` sent as a document", "Markdown")
     |> Document.send(chat.id)
+  end
+
+  # ── /effects ───────────────────────────────────────────────────────
+  # Recover from a failed local file step with a fallback document URL
+  def handle_message(%{text: "/effects", chat: chat}, ctx) do
+    missing_path = "assets/missing.pdf"
+    fallback_url = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
+
+    ctx
+    |> Document.path(missing_path)
+    |> recover_with({:file, :enoent}, fn effect ->
+      payload = Map.put(Map.get(effect.ctx, :payload, %{}), :document, fallback_url)
+      {:ok, Map.put(effect.ctx, :payload, payload)}
+    end)
+    |> Document.caption("Local file was missing, sent fallback document instead.")
+    |> Document.send(chat.id)
+    |> on_error(_reason, fn effect ->
+      IO.inspect({effect.error, effect.ctx.chat_id}, label: "Effect send failed")
+    end)
   end
 
   # ── /sticker ───────────────────────────────────────────────────────
